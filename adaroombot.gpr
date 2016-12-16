@@ -1,13 +1,12 @@
 project AdaRoombot is
 
    for Object_Dir use "obj";
+   for Target use "arm-eabi";
+   for Runtime ("ada") use "ravenscar-full-stm32f429disco";
 
    package Ide is
       for Vcs_Kind use "Git";
    end Ide;
-
-   for Target use "arm-eabi";
-   for Runtime ("ada") use "ravenscar-full-stm32f7disco";
 
 end AdaRoombot;
 

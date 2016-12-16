@@ -27,19 +27,24 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
+with Communication; use Communication;
 
-package Communication is
+package body Communication is
 
-   type Serial_Byte is new Integer range 0 .. 255;
-   type Serial_Payload is array (Integer range <>) of Serial_Byte
-     with Pack;
+   procedure Communication_Init is
+   begin
+      Port.
+   end Communication_Init;
 
-   procedure Communication_Init;
-   procedure Serial_TX (Payload : Serial_Payload);
-   function Serial_RX return Serial_Payload;
+   procedure Serial_TX (Payload : Serial_Payload) is
+   begin
+      null;
+   end Serial_TX;
 
-private
-   Is_Init : Boolean := False;
-   Baud : Integer := 115200;
+   function Serial_RX return Serial_Payload is
+   begin
+      null;
+   end Serial_RX;
+
 
 end Communication;
