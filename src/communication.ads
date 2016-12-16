@@ -27,9 +27,13 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
-with STM32.USART; use STM32.USART;
 
 package Communication is
+
+   type Serial is abstract tagged record
+      null;
+   end Serial;
+
 
    type Serial_Byte is new Integer range 0 .. 255;
    type Serial_Payload is array (Integer range <>) of Serial_Byte

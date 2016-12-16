@@ -34,21 +34,19 @@ with Sensors; use Sensors;
 package body Sensors is
 
    function Get_Sensor_Single(Pkt : Sensor_Packets) return Serial_Payload is
-      Rec : Comm_Rec(Sensors);
       Ret : Serial_Payload(0 .. 0);
    begin
-      Send_Command(Rec);
+      Send_Command(Comm_Rec'(Op => Sensors));
       -- TODO: listen for response
       return Ret;
    end Get_Sensor_Single;
 
    function Get_Sensor_List (List : Sensor_Array) return Serial_Payload is
-      Rec : Comm_Rec(Query_List);
       Ret : Serial_Payload(1 .. List'Length);
       Payload : Serial_Payload (1 .. List'Size / 8)
 	with Address => List'Address;
    begin
-      Send_Command(Rec, Payload);
+      Send_Command(Comm_Rec'(Op => Query_List), Payload);
       -- TODO: listen for response
       return Ret;
    end Get_Sensor_List;

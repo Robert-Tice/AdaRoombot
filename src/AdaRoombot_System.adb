@@ -27,13 +27,14 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
-with Commands;
-with Communication;
-with Mode;
+with Commands; use Commands;
+with Communication; use Communication;
+with Mode; use Mode;
 
 package body AdaRoombot_System is
 
    procedure System_Init is
+      Mode : Interface_Mode;
    begin
       if Is_Init then
 	 return;
@@ -44,8 +45,8 @@ package body AdaRoombot_System is
 
       Is_Init := True;
 
-      Commands.Start;
-      Current_Mode := Mode.Get_Mode;
+      Send_Command(Comm_Rec'(Op => Start));
+      Mode := Get_Mode;
    end System_Init;
 
    procedure System_Cleanup is

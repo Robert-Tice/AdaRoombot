@@ -33,7 +33,7 @@ package body Communication is
 
    procedure Communication_Init is
    begin
-      Port.
+      null;
    end Communication_Init;
 
    procedure Serial_TX (Payload : Serial_Payload) is
@@ -43,7 +43,7 @@ package body Communication is
 
    function Serial_RX return Serial_Payload is
    begin
-      null;
+      return null;
    end Serial_RX;
 
 
