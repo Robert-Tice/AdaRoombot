@@ -28,23 +28,34 @@
 ------------------------------------------------------------------------------
 
 
+
 package Communication is
 
-   type Serial is abstract tagged record
-      null;
-   end Serial;
+   Default_Baud : constant Integer := 115_200;
+   Is_Init : Boolean := False;
+   Baud : Integer := Default_Baud;
 
-
-   type Serial_Byte is new Integer range 0 .. 255;
+   type Serial_Byte is new Integer range 0 .. 255
+     with Size => 1;
    type Serial_Payload is array (Integer range <>) of Serial_Byte
      with Pack;
 
-   procedure Communication_Init;
-   procedure Serial_TX (Payload : Serial_Payload);
-   function Serial_RX return Serial_Payload;
+   Comm_Uninit_Exception : exception;
+
+   procedure Communication_Init (BC : Integer := Default_Baud)
+     with Post => Is_Init or else raise Comm_Uninit_Exception;
+
+   procedure Serial_TX (Payload : Serial_Payload)
+     with Pre => Is_Init or else raise Comm_Uninit_Exception;
+
+   function Serial_RX (Msg_Size : Integer) return Serial_Payload
+     with Pre => Is_Init or else raise Comm_Uninit_Exception;
+
+   procedure Set_Host_Baud (BC : Integer)
+     with Pre => Is_Init or else raise Comm_Uninit_Exception;
 
 private
-   Is_Init : Boolean := False;
-   Baud : Integer := 115200;
 
+   procedure Await_Send_Ready with Inline;
+   procedure Await_Data_Available with Inline;
 end Communication;

@@ -96,13 +96,13 @@ package Commands is
       LEDs,
       Song,
       Play,
-      Sensors,
+      Sensors_Single,
       Seek_Dock,
       PWM_Motors,
       Drive_Direct,
       Drive_PWM,
-      Stream,
-      Query_List,
+      Sensors_Stream,
+      Sensors_List,
       Pause_Resume_Stream,
       Scheduling_LEDs,
       Digital_LEDs_Raw,
@@ -111,45 +111,6 @@ package Commands is
       Schedule,
       Set_Day_Time,
       Stop);
-
-   -- Representation clause
-   for Opcode use
-     (Reset => 7,
-      Start => 128,
-      Baud => 129,
-      Mode_Safe => 131,
-      Mode_Full => 132,
-      Power => 133,
-      Spot_Clean =>134,
-      Clean => 135,
-      Max_Clean => 136,
-      Drive => 137,
-      Motors=> 138,
-      LEDs => 139,
-      Song => 140,
-      Play => 141,
-      Sensors => 142,
-      Seek_Dock => 143,
-      PWM_Motors => 144,
-      Drive_Direct => 145,
-      Drive_PWM => 146,
-      Stream => 148,
-      Query_List => 149,
-      Pause_Resume_Stream => 150,
-      Scheduling_LEDs => 162,
-      Digital_LEDs_RAW => 163,
-      Digital_LEDs_ASCII => 164,
-      Buttons => 165,
-      Schedule => 167,
-      Set_Day_Time => 168,
-      Stop => 173);
-
-
-   type Packet_ID is new Integer range 0 .. 128
-     with Static_Predicate => Packet_ID in 0 .. 58 | 100 | 101 | 106 | 107, Size => 8;
-
-   type Packet_Array is array (Integer range <>) of Packet_ID
-     with Pack;
 
    type Midi_Note is new Integer range 0 .. 127
      with Static_Predicate => Midi_Note in 0 | 31 .. 127, Size => 8;
@@ -167,6 +128,56 @@ package Commands is
    type Midi_Song is array (Integer range 1 .. 16) of Midi_Tone
      with Pack;
 
+   type Sensor_Packets is
+     (Bumps_and_Wheel_Drops,
+      Wall,
+      Cliff_Left,
+      Cliff_Front_Left,
+      Cliff_Front_Right,
+      Cliff_Right,
+      Virtual_Wall,
+      Wheel_Overcurrent,
+      Dirt_Detect,
+      IR_Char_Omni,
+      Buttons,
+      Distance,
+      Angle,
+      Charging_State,
+      Voltage,
+      Current,
+      Temperature,
+      Battery_Charge,
+      Battery_Capacity,
+      Wall_Signal,
+      Cliff_Left_Signal,
+      Cliff_Front_Left_Signal,
+      Cliff_Front_Right_Signal,
+      Cliff_Right_Signal,
+      Charging_Sources_Avail,
+      OI_Mode,
+      Song_Number,
+      Song_Playing,
+      Number_Stream_Packets,
+      Req_Velocity,
+      Req_Radius,
+      Req_Right_Velocity,
+      Req_Left_Velocity,
+      Left_Encoder_Counts,
+      Right_Encoder_Counts,
+      Light_Bumper,
+      Light_Bump_Left_Signal,
+      Light_Bump_Front_Left_Signal,
+      Light_Bump_Center_Left_Signal,
+      Light_Bump_Center_Right_Signal,
+      Light_Bump_Front_Right_Signal,
+      Light_Bump_Right_Signal,
+      IR_Char_Left,
+      IR_Char_Right,
+      Left_Motor_Current,
+      Right_Motor_Current,
+      Main_Brush_Motor_Current,
+      Side_Brush_Motor_Current,
+      Stasis) with Size=>8;
 
    type Comm_Rec(Op: Opcode) is record
 	 case Op is
@@ -193,8 +204,8 @@ package Commands is
 	    Song_Length : Integer range 1 .. 16;
 	 when Play =>
 	    Play_Song_Number : Integer range 0 .. 4;
-	 when Sensors =>
-	    Sensor_Packet_ID : Packet_ID;
+	 when Sensors_Single =>
+	    Sensor_Packet_ID : Sensor_Packets;
 	 when PWM_Motors =>
 	    Main_Brush_PWM : Integer range -127 .. 127;
 	    Side_Brush_PWM : Integer range -127 .. 127;
@@ -205,9 +216,9 @@ package Commands is
 	 when Drive_PWM =>
 	    Right_PWM : Integer range -255 .. 255;
 	    Left_PWM : Integer range -255 .. 255;
-	 when Stream =>
+	 when Sensors_Stream =>
 	    Num_Stream_Packets : Integer range 0 .. 255;
-	 when Query_List =>
+	 when Sensors_List =>
 	    Num_Query_Packets : Integer range 0 .. 255;
 	 when Pause_Resume_Stream =>
 	    Stream_State : Boolean;
@@ -278,6 +289,140 @@ package Commands is
 	    null;
 	 end case;
    end record;
+
+   type Charging_State_Code is
+     (Not_Charging,
+      Reconditioning_Charging,
+      Full_Charging,
+      Trickle_Charging,
+      Waiting,
+      Charging_Fault_Condition)
+     with Size => 8;
+
+    type Sensor_Data (S : Sensor_Packets) is record
+      case S is
+      when Bumps_and_Wheel_Drops =>
+	 Bump_Right : Boolean;
+	 Bump_Left : Boolean;
+	 Wheel_Drop_Right : Boolean;
+	 Wheel_Drop_Left : Boolean;
+      when Wall | Virtual_Wall =>
+	 Seen : Boolean;
+      when Cliff_Left | Cliff_Front_Left | Cliff_Front_Right | Cliff_Right =>
+	 Cliff : Boolean;
+      when Wheel_Overcurrent =>
+	 Side_Brush_OC : Boolean;
+	 Main_Brush_OC : Boolean;
+	 Right_Wheel_OC : Boolean;
+	 Left_Wheel_OC : Boolean;
+      when Dirt_Detect =>
+	 Dirt_Level : Integer range 0 .. 255;
+      when IR_Char_Omni | IR_Char_Left | IR_Char_Right =>
+	 IR_Char : Character;
+      when Buttons =>
+	 Clean_But : Boolean;
+	 Spot_But : Boolean;
+	 Dock_But : Boolean;
+	 Minute_But : Boolean;
+	 Hour_But : Boolean;
+	 Day_But : Boolean;
+	 Schedule_But : Boolean;
+	 Clock_But : Boolean;
+      when Distance =>
+	 Dis : Integer range -32768 .. 32767;
+      when Angle =>
+	 Angle_Turned : Integer range -32768 .. 32767;
+      when Charging_State =>
+	 Charge_State : Charging_State_Code;
+      when Voltage =>
+	 Battery_mV : Integer range 0 .. 65535;
+      when Current =>
+	 Battery_mA : Integer range -32768 .. 32767;
+      when Temperature =>
+	 Temp_C : Integer range -128 .. 127;
+      when Battery_Charge | Battery_Capacity =>
+	 Battery_mAh : Integer range 0 .. 65535;
+      when Wall_Signal =>
+	 WSignal : Integer range 0 .. 1023;
+      when Cliff_Left_Signal | Cliff_Front_Left_Signal |
+	   Cliff_Front_Right_Signal | Cliff_Right_Signal |
+	   Light_Bump_Left_Signal | Light_Bump_Front_Left_Signal |
+	   Light_Bump_Center_Left_Signal | Light_Bump_Center_Right_Signal |
+	   Light_Bump_Front_Right_Signal | Light_Bump_Right_Signal =>
+	 Signal_Strength : Integer range 0 .. 4095;
+      when Charging_Sources_Avail =>
+	 Internal_Charger : Boolean;
+	 Home_Base : Boolean;
+      when OI_Mode =>
+	 Current_Mode : Integer range 0 .. 3;
+      when Song_Number =>
+	 Song_Num : Integer range 0 .. 15;
+      when Song_Playing =>
+	 Playing : Boolean;
+      when Number_Stream_Packets =>
+	 Num_Pkts : Integer range 0 .. 108;
+      when Req_Velocity | Req_Right_Velocity | Req_Left_Velocity =>
+	 Vel : Velocity;
+      when Req_Radius =>
+	 Rad : Radius;
+      when Left_Encoder_Counts | Right_Encoder_Counts =>
+	 Counts : Integer range -32768 .. 32767;
+      when Light_Bumper =>
+	 LT_Bump_Left : Boolean;
+	 LT_Bump_Front_Left : Boolean;
+	 LT_Bump_Center_Left : Boolean;
+	 LT_Bump_Center_Right : Boolean;
+	 LT_Bump_Front_Right : Boolean;
+	 LT_Bump_Right : Boolean;
+      when Left_Motor_Current | Right_Motor_Current |
+	   Main_Brush_Motor_Current | Side_Brush_Motor_Current =>
+	 Motor_Current : Integer range -32767 .. 32767;
+      when Stasis =>
+	 Stasis_Toggling : Boolean;
+	 Stasis_Disabled : Boolean;
+      end case;
+   end record
+	with Pack;
+
+
+   type Sensor_List is array (Integer range <>) of Sensor_Packets;
+ --  type Sensor_Array is array (Integer range <>) of Sensor_Data;
+
+   function Get_Sensor_Single (Pkt : Sensor_Packets) return Sensor_Data;
+--   function Get_Sensor_List (List : Sensor_List) return Sensor_Array;
+   -- TODO: figure out sensor stream definiton
+
+   -- Representation clause
+   for Opcode use
+     (Reset => 7,
+      Start => 128,
+      Baud => 129,
+      Mode_Safe => 131,
+      Mode_Full => 132,
+      Power => 133,
+      Spot_Clean =>134,
+      Clean => 135,
+      Max_Clean => 136,
+      Drive => 137,
+      Motors=> 138,
+      LEDs => 139,
+      Song => 140,
+      Play => 141,
+      Sensors_Single => 142,
+      Seek_Dock => 143,
+      PWM_Motors => 144,
+      Drive_Direct => 145,
+      Drive_PWM => 146,
+      Sensors_Stream => 148,
+      Sensors_List => 149,
+      Pause_Resume_Stream => 150,
+      Scheduling_LEDs => 162,
+      Digital_LEDs_RAW => 163,
+      Digital_LEDs_ASCII => 164,
+      Buttons => 165,
+      Schedule => 167,
+      Set_Day_Time => 168,
+      Stop => 173);
 
    -- Representation clause
    for Comm_Rec use record
@@ -395,6 +540,108 @@ package Commands is
 
    procedure Send_Command (Rec : Comm_Rec);
    procedure Send_Command (Rec : Comm_Rec; Data : Serial_Payload);
+
+   for Sensor_Packets use
+     (Bumps_and_Wheel_Drops => 7,
+      Wall => 8,
+      Cliff_Left => 9,
+      Cliff_Front_Left => 10,
+      Cliff_Front_Right => 11,
+      Cliff_Right => 12,
+      Virtual_Wall => 13,
+      Wheel_Overcurrent => 14,
+      Dirt_Detect => 15,
+      IR_Char_Omni => 17,
+      Buttons => 18,
+      Distance => 19,
+      Angle => 20,
+      Charging_State => 21,
+      Voltage => 22,
+      Current => 23,
+      Temperature => 24,
+      Battery_Charge => 25,
+      Battery_Capacity => 26,
+      Wall_Signal => 27,
+      Cliff_Left_Signal => 28,
+      Cliff_Front_Left_Signal => 29,
+      Cliff_Front_Right_Signal => 30,
+      Cliff_Right_Signal => 31,
+      Charging_Sources_Avail => 34,
+      OI_Mode => 35,
+      Song_Number => 36,
+      Song_Playing => 37,
+      Number_Stream_Packets => 38,
+      Req_Velocity => 39,
+      Req_Radius => 40,
+      Req_Right_Velocity => 41,
+      Req_Left_Velocity => 42,
+      Left_Encoder_Counts => 43,
+      Right_Encoder_Counts => 44,
+      Light_Bumper => 45,
+      Light_Bump_Left_Signal => 46,
+      Light_Bump_Front_Left_Signal => 47,
+      Light_Bump_Center_Left_Signal => 48,
+      Light_Bump_Center_Right_Signal => 49,
+      Light_Bump_Front_Right_Signal => 50,
+      Light_Bump_Right_Signal => 51,
+      IR_Char_Left => 52,
+      IR_Char_Right => 53,
+      Left_Motor_Current => 54,
+      Right_Motor_Current => 55,
+      Main_Brush_Motor_Current => 56,
+      Side_Brush_Motor_Current => 57,
+      Stasis => 58);
+
+   for Sensor_Data use record
+      Bump_Right at 0 range 0 .. 0;
+      Bump_Left at 0 range 1 .. 1;
+      Wheel_Drop_Right at 0 range 2 .. 2;
+      Wheel_Drop_Left at 0 range 3 .. 3;
+      Seen at 0 range 0 .. 0;
+      Cliff at 0 range 0 .. 0;
+      Side_Brush_OC at 0 range 0 .. 0;
+      Main_Brush_OC at 0 range 1 .. 1;
+      Right_Wheel_OC at 0 range 2 .. 2;
+      Left_Wheel_OC at 0 range 3 .. 3;
+      Dirt_Level at 0 range 0 .. 7;
+      IR_Char at 0 range 0 .. 7;
+      Clean_But at 0 range 0 .. 0;
+      Spot_But at 0 range 1 .. 1;
+      Dock_But at 0 range 2 .. 2;
+      Minute_But at 0 range 3 .. 3;
+      Hour_But at 0 range 4 .. 4;
+      Day_But at 0 range 5 .. 5;
+      Schedule_But at 0 range 6 .. 6;
+      Clock_But at 0 range 7 .. 7;
+      Dis at 0 range 0 .. 15;
+      Angle_Turned at 0 range 0 .. 15;
+      Charge_State at 0 range 0 .. 7;
+      Battery_mV at 0 range 0 .. 15;
+      Battery_mA at 0 range 0 .. 15;
+      Temp_C at 0 range 0 .. 7;
+      Battery_mAh at 0 range 0 .. 15;
+      WSignal at 0 range 0 ..15;
+      Signal_Strength at 0 range 0 .. 15;
+      Internal_Charger at 0 range 0 .. 0;
+      Home_Base at 0 range 1 .. 1;
+      Current_Mode at 0 range 0 .. 7;
+      Song_Num at 0 range 0 .. 7;
+      Playing at 0 range 0 .. 0;
+      Num_Pkts at 0 range 0 .. 7;
+      Vel at 0 range 0 .. 15;
+      Rad at 0 range 0 .. 15;
+      Counts at 0 range 0 .. 15;
+      LT_Bump_Left at 0 range 0 .. 0;
+      LT_Bump_Front_Left at 0 range 1 .. 1;
+      LT_Bump_Center_Left at 0 range 2 .. 2;
+      LT_Bump_Center_Right at 0 range 3 .. 3;
+      LT_Bump_Front_Right at 0 range 4 .. 4;
+      LT_Bump_Right at 0 range 5 .. 5;
+      Motor_Current at 0 range 0 .. 15;
+      Stasis_Toggling at 0 range 0 .. 0;
+      Stasis_Disabled at 0 range 1 .. 1;
+   end record;
+
 
 private
    function Check_Valid_Mode(Op : Opcode) return Boolean;

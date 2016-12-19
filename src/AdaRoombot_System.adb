@@ -31,38 +31,43 @@ with Commands; use Commands;
 with Communication; use Communication;
 with Mode; use Mode;
 
+with Ada.Real_Time; use Ada.Real_Time;
+
 package body AdaRoombot_System is
 
    procedure System_Init is
-      Mode : Interface_Mode;
    begin
-      if Is_Init then
-	 return;
-      end if;
-
-      -- Do init code here
       Communication_Init;
-
       Is_Init := True;
-
-      Send_Command(Comm_Rec'(Op => Start));
-      Mode := Get_Mode;
    end System_Init;
 
    procedure System_Cleanup is
    begin
-      null;
+      Is_Init := False;
    end System_Cleanup;
 
-
    procedure System_Loop is
+      Rx_Data : Sensor_Data(S => Charging_Sources_Avail);
    begin
-
+      System_Init;
+      Send_Command(Comm_Rec'(Op => Start));
+      Send_Command(Comm_Rec'(Op => Mode_Safe));
+      Send_Command(Comm_Rec'(Op => Clean));
+      delay until (Now + Seconds(10));
+      Send_Command(Comm_Rec'(Op => Seek_Dock));
       loop
-	 -- Do loop code here
-	 null;
+	 Rx_Data := Get_Sensor_Single(Charging_Sources_Avail);
+	 exit when Rx_Data.Home_Base;
+	 delay until (Now + Milliseconds(50));
       end loop;
-
+      Send_Command(Comm_Rec'(Op => Stop));
+      System_Cleanup;
    end System_Loop;
+
+   function Now return Time is
+   begin
+      return Clock;
+   end Now;
+
 
 end AdaRoombot_System;

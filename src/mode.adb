@@ -37,10 +37,10 @@ package body Mode is
       Pkt : Serial_Payload(0 .. 0);
    begin
       Pkt := Get_Sensor_Single(OI_Mode);
-      Current_Mode := Mode'Val(Pkt(0));
+      Current_Mode := Interface_Mode'Val(Pkt(0));
    end Read_Mode_From_Target;
 
-   function Get_Mode return Mode is
+   function Get_Mode return Interface_Mode is
    begin
       case Current_Mode is
       when Uninit =>
@@ -52,7 +52,7 @@ package body Mode is
       return Current_Mode;
    end Get_Mode;
 
-   procedure Change_Mode (Set_Mode : Mode) is
+   procedure Change_Mode (Set_Mode : Interface_Mode) is
    begin
       if Set_Mode /= Current_Mode then
 	 Current_Mode := Set_Mode;
@@ -61,7 +61,7 @@ package body Mode is
 
    end Change_Mode;
 
-   procedure Effect_Mode_Changed (Set_Mode : Mode) is
+   procedure Effect_Mode_Changed (Set_Mode : Interface_Mode) is
    begin
       Current_Mode := Set_Mode;
    end Effect_Mode_Changed;

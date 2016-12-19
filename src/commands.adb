@@ -41,7 +41,7 @@ package body Commands is
       case Op is
       when Start | Stop | Baud | Mode_Safe | Mode_Full | Clean | Max_Clean | Spot_Clean |
 	   Seek_Dock | Power | Schedule | Set_Day_Time | Buttons | Song |
-	   Sensors | Query_List | Stream | Pause_Resume_Stream =>
+	   Sensors_Single | Sensors_List | Sensors_Stream | Pause_Resume_Stream =>
 	 case Md is
 	 when Passive | Safe | Full =>
 	    Valid := True;
@@ -142,12 +142,24 @@ package body Commands is
       return SData;
    end Construct_Drive_Special;
 
+   function Get_Sensor_Single(Pkt : Sensor_Packets) return Sensor_Data is
+      Ret : Sensor_Data(Pkt);
+      Raw : Serial_Payload (1 .. Ret'Size / 8)
+	with Address => Ret'Address;
+   begin
+      Send_Command(Comm_Rec'(Op => Sensors_Single, Sensor_Packet_ID => Pkt));
+      Raw := Serial_RX(Ret'Size / 8);
+      return Ret;
+   end Get_Sensor_Single;
 
-
-
-
-
-
-
+--     function Get_Sensor_List (List : Sensor_Array) return Serial_Payload is
+--        Ret : Serial_Payload(1 .. List'Length);
+--        Payload : Serial_Payload (1 .. List'Size / 8)
+--  	with Address => List'Address;
+--     begin
+--        Send_Command(Comm_Rec'(Op => Query_List), Payload);
+--        Ret := Serial_RX(Ret'Length);
+--        return Ret;
+--     end Get_Sensor_List;
 
 end Commands;

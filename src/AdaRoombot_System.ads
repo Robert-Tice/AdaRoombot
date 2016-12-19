@@ -26,16 +26,25 @@
 --  however invalidate any other reasons why the executable file  might be  --
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
+with Ada.Real_Time; use Ada.Real_Time;
+
 
 package AdaRoombot_System is
 
+   Is_Init : Boolean := False;
 
-   procedure System_Init;
-   procedure System_Cleanup;
+   procedure System_Init
+     with Pre => not Is_Init,
+     Post => Is_Init;
 
-   procedure System_Loop;
+   procedure System_Cleanup
+     with Pre => Is_Init,
+     Post => not Is_Init;
+
+   procedure System_Loop
+     with Pre => Is_Init;
 
 private
-   Is_Init : Boolean := False;
+   function Now return Time;
 
 end AdaRoombot_System;
