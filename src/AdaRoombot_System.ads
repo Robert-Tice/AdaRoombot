@@ -28,7 +28,6 @@
 ------------------------------------------------------------------------------
 with Ada.Real_Time; use Ada.Real_Time;
 
-
 package AdaRoombot_System is
 
    Is_Init : Boolean := False;

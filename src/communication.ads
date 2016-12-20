@@ -36,7 +36,7 @@ package Communication is
    Baud : Integer := Default_Baud;
 
    type Serial_Byte is new Integer range 0 .. 255
-     with Size => 1;
+     with Size => 8;
    type Serial_Payload is array (Integer range <>) of Serial_Byte
      with Pack;
 

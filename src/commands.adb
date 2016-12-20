@@ -27,8 +27,6 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
-with Commands;
-with Communication; use Communication;
 with Mode; use Mode;
 
 package body Commands is
@@ -39,126 +37,127 @@ package body Commands is
    begin
       Md := Get_Mode;
       case Op is
-      when Start | Stop | Baud | Mode_Safe | Mode_Full | Clean | Max_Clean | Spot_Clean |
-	   Seek_Dock | Power | Schedule | Set_Day_Time | Buttons | Song |
-	   Sensors_Single | Sensors_List | Sensors_Stream | Pause_Resume_Stream =>
-	 case Md is
-	 when Passive | Safe | Full =>
-	    Valid := True;
-	 when others =>
-	    Valid := False;
-	 end case;
+      when Start | Stop | Baud | Mode_Safe | Mode_Full | Clean | Max_Clean |
+           Spot_Clean | Seek_Dock | Power | Schedule | Set_Day_Time | Buttons |
+           Song | Sensors_Single | Sensors_List | Sensors_Stream |
+           Pause_Resume_Stream =>
+         case Md is
+         when Passive | Safe | Full =>
+            Valid := True;
+         when others =>
+            Valid := False;
+         end case;
       when Drive | Drive_Direct | Drive_PWM | Motors | PWM_Motors |
-	   LEDs | Scheduling_LEDs | Digital_LEDs_Raw | Digital_LEDs_ASCII |
-	   Play =>
-	 case Md is
-	 when Safe | Full =>
-	    Valid := True;
-	 when others =>
-	    Valid := False;
-	 end case;
+           LEDs | Scheduling_LEDs | Digital_LEDs_Raw | Digital_LEDs_ASCII |
+           Play =>
+         case Md is
+         when Safe | Full =>
+            Valid := True;
+         when others =>
+            Valid := False;
+         end case;
       when others =>
-	 Valid := True;
+         Valid := True;
       end case;
 
       return Valid;
    end Check_Valid_Mode;
 
-   procedure Command_Post(Op : Opcode) is
+   procedure Command_Post (Op : Opcode) is
    begin
       case Op is
       when Start | Clean | Max_Clean | Spot_Clean | Seek_Dock | Power =>
-	 Effect_Mode_Changed(Passive);
+         Effect_Mode_Changed (Passive);
       when Reset | Stop =>
-	 Effect_Mode_Changed(Off);
+         Effect_Mode_Changed (Off);
       when Mode_Safe =>
-	 Effect_Mode_Changed(Safe);
+         Effect_Mode_Changed (Safe);
       when Mode_Full =>
-	 Effect_Mode_Changed(Full);
+         Effect_Mode_Changed (Full);
       when others =>
-	 null;
+         null;
       end case;
    end Command_Post;
 
    procedure Send_Command (Rec : Comm_Rec) is
       Raw : Serial_Payload (1 .. Rec'Size / 8)
-	with Address => Rec'Address;
+        with Address => Rec'Address;
    begin
 
-      if not Check_Valid_Mode(Rec.Op) then
-	 -- TODO: handle error condition
-	 return;
+      if not Check_Valid_Mode (Rec.Op) then
+         --  TODO: handle error condition
+         return;
       end if;
 
-      Serial_TX(Raw);
+      Serial_TX (Raw);
 
-      Command_Post(Rec.Op);
+      Command_Post (Rec.Op);
    end Send_Command;
 
    procedure Send_Command (Rec : Comm_Rec; Data : Serial_Payload) is
       Raw : Serial_Payload (1 .. Rec'Size / 8)
-	with Address => Rec'Address;
+        with Address => Rec'Address;
    begin
 
-      if not Check_Valid_Mode(Rec.Op) then
-	 -- TODO: handle error condition
-	 return;
+      if not Check_Valid_Mode (Rec.Op) then
+         --  TODO: handle error condition
+         return;
       end if;
 
-      Serial_TX(Raw & Data);
+      Serial_TX (Raw & Data);
 
-      Command_Post(Rec.Op);
+      Command_Post (Rec.Op);
    end Send_Command;
 
-
    function Construct_Baud (BC : Baud_Code) return Comm_Rec is
-      SData : Comm_Rec(Baud);
+      SData : Comm_Rec (Baud);
    begin
-      SData.Baud_Rate := Baud_Code'Pos(BC);
+      SData.Baud_Rate := Baud_Code'Pos (BC);
       return SData;
    end Construct_Baud;
 
    function Construct_Date_Time (D : Day; H : Hour; M : Minute) return Comm_Rec
    is
-      SData : Comm_Rec(Set_Day_Time);
+      SData : Comm_Rec (Set_Day_Time);
    begin
-      SData.Dy := Day'Pos(D);
+      SData.Dy := Day'Pos (D);
       SData.Hr := H;
       SData.Min := M;
       return SData;
    end Construct_Date_Time;
 
-   function Construct_Drive_Special (Special : Drive_Special) return Comm_Rec is
-      SData : Comm_Rec(Drive);
+   function Construct_Drive_Special (Special : Drive_Special)
+                                     return Comm_Rec is
+      SData : Comm_Rec (Drive);
    begin
       case Special is
       when Straight =>
-	 SData.Rad := 32767;
+         SData.Rad := 32767;
       when CW =>
-	SData. Rad := -1;
+         SData. Rad := -1;
       when CCW =>
-	 SData.Rad := 1;
+         SData.Rad := 1;
       end case;
       return SData;
    end Construct_Drive_Special;
 
-   function Get_Sensor_Single(Pkt : Sensor_Packets) return Sensor_Data is
-      Ret : Sensor_Data(Pkt);
+   function Get_Sensor_Single (Pkt : Sensor_Packets) return Sensor_Data is
+      Ret : Sensor_Data (Pkt);
       Raw : Serial_Payload (1 .. Ret'Size / 8)
-	with Address => Ret'Address;
+        with Address => Ret'Address;
    begin
-      Send_Command(Comm_Rec'(Op => Sensors_Single, Sensor_Packet_ID => Pkt));
-      Raw := Serial_RX(Ret'Size / 8);
+      Send_Command (Comm_Rec'(Op => Sensors_Single, Sensor_Packet_ID => Pkt));
+      Raw := Serial_RX (Ret'Size / 8);
       return Ret;
    end Get_Sensor_Single;
 
 --     function Get_Sensor_List (List : Sensor_Array) return Serial_Payload is
---        Ret : Serial_Payload(1 .. List'Length);
+--        Ret : Serial_Payload (1 .. List'Length);
 --        Payload : Serial_Payload (1 .. List'Size / 8)
---  	with Address => List'Address;
+--          with Address => List'Address;
 --     begin
---        Send_Command(Comm_Rec'(Op => Query_List), Payload);
---        Ret := Serial_RX(Ret'Length);
+--        Send_Command (Comm_Rec'(Op => Query_List), Payload);
+--        Ret := Serial_RX (Ret'Length);
 --        return Ret;
 --     end Get_Sensor_List;
 

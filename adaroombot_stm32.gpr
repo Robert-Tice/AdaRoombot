@@ -1,0 +1,123 @@
+with "Ada_Drivers_Library/boards/stm32f429_discovery.gpr";
+
+project AdaRoombot_Stm32 extends "Ada_Drivers_Library/examples/common/common.gpr" is
+
+   type Loader_Type is
+      ("RAM", "ROM");
+   type Rts_Type is
+      ("ravenscar-sfp", "ravenscar-full");
+   type Lch_Type is
+      ("led", "lcd");
+   type Build_Type is
+      ("Debug", "Production");
+   for Target use "arm-eabi";
+   for Languages use ("Ada");
+   for Object_Dir use "obj/stm32";
+   for Source_Dirs use ("src", "stm32-src");
+   for Main use ("AdaRoombot_System.adb");
+   BUILD : Build_Type := external ("BUILD", "Debug");
+   LCH : Lch_Type := external ("LCH");
+   RTS : Rts_Type := external ("RTS");
+   LOADER : Loader_Type := external ("LOADER");
+
+   package Builder is
+      for Global_Configuration_Pragmas use "gnat.adc";
+      for Executable ("main.adb") use "adaroombot.elf";
+      for Default_Switches ("Ada") use ("-s");
+   end Builder;
+
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("ada") use
+              ("-gnatQ", "-gnatyg", "-O0", "-gnata", "-gnatwae", "-g");
+         when "Production" =>
+            for Default_Switches ("ada") use
+              ("-gnatQ", "-gnatyg", "-O2", "-gnatn");
+      end case;
+   end Compiler;
+
+   case BUILD is
+      when "Debug" =>
+         case LCH is
+            when "led" =>
+               case RTS is
+                  when "ravenscar-sfp" =>
+                     case LOADER is
+                        when "RAM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                        when "ROM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                     end case;
+                  when "ravenscar-full" =>
+                     case LOADER is
+                        when "RAM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                        when "ROM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                     end case;
+               end case;
+            when "lcd" =>
+               case RTS is
+                  when "ravenscar-sfp" =>
+                     case LOADER is
+                        when "RAM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                        when "ROM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                     end case;
+                  when "ravenscar-full" =>
+                     case LOADER is
+                        when "RAM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                        when "ROM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                     end case;
+               end case;
+         end case;
+      when "Production" =>
+         case LCH is
+            when "led" =>
+               case RTS is
+                  when "ravenscar-sfp" =>
+                     case LOADER is
+                        when "RAM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                        when "ROM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                     end case;
+                  when "ravenscar-full" =>
+                     case LOADER is
+                        when "RAM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                        when "ROM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                     end case;
+               end case;
+            when "lcd" =>
+               case RTS is
+                  when "ravenscar-sfp" =>
+                     case LOADER is
+                        when "RAM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+
+                        when "ROM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                     end case;
+
+                  when "ravenscar-full" =>
+
+                     case LOADER is
+
+                        when "RAM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+
+                        when "ROM" =>
+                           for Runtime ("ada") use "ravenscar-full-stm32f4";
+                     end case;
+               end case;
+         end case;
+   end case;
+
+end AdaRoombot_Stm32;
+

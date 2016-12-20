@@ -29,9 +29,8 @@
 
 with Commands; use Commands;
 with Communication; use Communication;
-with Mode; use Mode;
 
-with Ada.Real_Time; use Ada.Real_Time;
+with Last_Chance_Handler; pragma Unreferenced (Last_Chance_Handler);
 
 package body AdaRoombot_System is
 
@@ -47,20 +46,22 @@ package body AdaRoombot_System is
    end System_Cleanup;
 
    procedure System_Loop is
-      Rx_Data : Sensor_Data(S => Charging_Sources_Avail);
+      Rx_Data : Sensor_Data (S => Charging_Sources_Avail);
    begin
       System_Init;
-      Send_Command(Comm_Rec'(Op => Start));
-      Send_Command(Comm_Rec'(Op => Mode_Safe));
-      Send_Command(Comm_Rec'(Op => Clean));
-      delay until (Now + Seconds(10));
-      Send_Command(Comm_Rec'(Op => Seek_Dock));
+      Send_Command (Comm_Rec'(Op => Start));
+      Send_Command (Comm_Rec'(Op => Mode_Safe));
+      Send_Command (Comm_Rec'(Op => Clean));
+      delay until (Now + Seconds (10));
+      Send_Command (Comm_Rec'(Op => Seek_Dock));
+
       loop
-	 Rx_Data := Get_Sensor_Single(Charging_Sources_Avail);
-	 exit when Rx_Data.Home_Base;
-	 delay until (Now + Milliseconds(50));
+         Rx_Data := Get_Sensor_Single (Charging_Sources_Avail);
+         exit when Rx_Data.Home_Base;
+         delay until (Now + Milliseconds (50));
       end loop;
-      Send_Command(Comm_Rec'(Op => Stop));
+
+      Send_Command (Comm_Rec'(Op => Stop));
       System_Cleanup;
    end System_Loop;
 
@@ -68,6 +69,5 @@ package body AdaRoombot_System is
    begin
       return Clock;
    end Now;
-
 
 end AdaRoombot_System;
