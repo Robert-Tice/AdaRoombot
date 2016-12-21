@@ -31,6 +31,8 @@ with Mode; use Mode;
 
 package body Commands is
 
+   Invalid_Mode_Exception : exception;
+
    function Check_Valid_Mode (Op : Opcode) return Boolean is
       Md : Interface_Mode;
       Valid : Boolean;
@@ -85,7 +87,7 @@ package body Commands is
    begin
 
       if not Check_Valid_Mode (Rec.Op) then
-         --  TODO: handle error condition
+         raise Invalid_Mode_Exception;
          return;
       end if;
 
@@ -100,7 +102,7 @@ package body Commands is
    begin
 
       if not Check_Valid_Mode (Rec.Op) then
-         --  TODO: handle error condition
+         raise Invalid_Mode_Exception;
          return;
       end if;
 

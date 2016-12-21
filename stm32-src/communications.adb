@@ -27,48 +27,95 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
-with Commands; use Commands;
 with Communication; use Communication;
 
-with Ada.Real_Time; use Ada.Real_Time;
+with STM32; use STM32;
+with STM32.Device; use STM32.Device;
+with STM32.GPIO; use STM32.GPIO;
+with STM32.USARTs; use STM32.USARTs;
 
-procedure AdaRoombot_System is
+package body Communication is
 
-   Is_Init : Boolean := False;
-   Rx_Data : Sensor_Data (S => Charging_Sources_Avail);
+   with Last_Chance_Handler; pragma Unreferenced (Last_Chance_Handler);
 
-   procedure System_Init is
+   Parity : constant Parity := No_Parity;
+   Data_Bits : constant Word_Lengths := Word_Length_8;
+   End_Bits : constant Stop_Bits := Stopbits_1;
+   Control : constant Flow_Control := No_Flow_Control;
+
+   procedure Await_Send_Ready is
    begin
-      Communication_Init;
+      loop
+         exit when Tx_Ready(USART);
+      end loop;
+   end Await_Send_Ready;
+
+   procedure Await_Data_Available is
+   begin
+      loop
+         exit when Rx_Ready(USART);
+      end loop;
+   end Await_Data_Available;
+
+
+   procedure Communication_Init (BC : Integer := Default_Baud) is
+      Config : GPIO_Port_Configuration;
+      Device_Pins : constant GPIO_Points := GPIO_Point & GPIO_Point;
+   begin
+      -- Configure Pin muxing
+      Enable_Clock(Device_Pins);
+      Enable_Clock(USART.all);
+
+      Config.Mode := Mode_AF;
+      Config.Speed := Speed_50MHz;
+      Config.Output_Type := Push_Pull;
+      Config.Resistors := Pull_Up;
+
+      Configure_IO(Device_Pins, Config);
+      Configure_Alternate_Function(Device_Pins, GPIO_Alternate_Function);
+
+      -- Setup peripheral
+      Disable(USART);
+
+      Set_Baud_Rate(USART, Baud_Rates(BC));
+      Set_Mode(USART, Tx_Rx_Mode);
+      Set_Stop_Bits(USART, End_Bits);
+      Set_Word_Length(USART, Data_Bits);
+      Set_Parity(USART, Parity);
+      Set_Flow_Control(USART, Control);
+
+      Enable(USART);
+
       Is_Init := True;
-   end System_Init;
+   end Communication_Init;
 
-   procedure System_Cleanup is
+   procedure Serial_TX (Payload : Serial_Payload) is
    begin
-      Communications_Close;
+      for I in 1 .. Payload'Length loop
+	 Await_Send_Ready;
+	 Transmit(USART, Payload(I));
+      end loop;
+   end Serial_TX;
+
+   function Serial_RX (Msg_Size : Integer) return Serial_Payload is
+      Ret : Serial_Payload(1 .. Msg_Size);
+   begin
+      for I in 1 .. Msg_Size loop
+	 Await_Data_Available;
+	 Receive(USART, Ret(I));
+      end loop;
+   end Serial_RX;
+
+   procedure Set_Host_Baud (BC : Integer) is
+   begin
+      Disable(USART);
+      Set_Baud_Rate(USART, Baud_Rates(BC));
+      Enable(USART);
+   end Set_Host_Baud;
+
+   procedure Communications_Close is
+   begin
       Is_Init := False;
-   end System_Cleanup;
+   end Communications_Close;
 
-   function Now return Time is
-   begin
-      return Clock;
-   end Now;
-
-begin
-   System_Init;
-   Send_Command (Comm_Rec'(Op => Start));
-   Send_Command (Comm_Rec'(Op => Mode_Safe));
-   Send_Command (Comm_Rec'(Op => Clean));
-   delay until (Now + Seconds (10));
-   Send_Command (Comm_Rec'(Op => Seek_Dock));
-
-   loop
-      Rx_Data := Get_Sensor_Single (Charging_Sources_Avail);
-      exit when Rx_Data.Home_Base;
-      delay until (Now + Milliseconds (50));
-   end loop;
-
-   Send_Command (Comm_Rec'(Op => Stop));
-   System_Cleanup;
-
-end AdaRoombot_System;
+end Communication;

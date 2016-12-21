@@ -29,72 +29,96 @@
 
 with Communication; use Communication;
 
-with STM32; use STM32;
-with STM32.Device; use STM32.Device;
-with STM32.GPIO; use STM32.GPIO;
-with STM32.USARTs; use STM32.USARTs;
+with Ada.Containers; use Ada.Containers;
+with Ada.Streams; use Ada.Streams;
+
+with GNAT.Serial_Communications; use GNAT.Serial_Communications;
 
 package body Communication is
 
-   Parity : constant Parity := No_Parity;
-   Data_Bits : constant Word_Lengths := Word_Length_8;
-   End_Bits : constant Stop_Bits := Stopbits_1;
-   Control : constant Flow_Control := No_Flow_Control;
+   Parity : constant Parity_Check := None;
+   Bits : constant Data_Bits := CS8;
+   End_Bits : constant Stop_Bits_Number := One;
+   Control : constant Flow_Control := None;
 
+   COM_Num : constant Natural := 7;
+   G_Port : Serial_Port;
 
    procedure Communication_Init (BC : Integer := Default_Baud) is
-      Config : GPIO_Port_Configuration;
-      Device_Pins : constant GPIO_Points := GPIO_Point & GPIO_Point;
+      PName : constant Port_Name := Name (Number => COM_Num);
+      Rate : Data_Rate;
    begin
-      -- Configure Pin muxing
-      Enable_Clock(Device_Pins);
-      Enable_Clock(USART.all);
+      Open(Port => G_Port,
+           Name => PName);
+      case BC is
+         when 75 =>
+            Rate := B75;
+         when 110 =>
+            Rate := B110;
+         when 150 =>
+            Rate := B150;
+         when 300 =>
+            Rate := B300;
+         when 600 =>
+            Rate := B600;
+         when 1200 =>
+            Rate := B1200;
+         when 2400 =>
+            Rate := B2400;
+         when 4800 =>
+            Rate := B4800;
+         when 9600 =>
+            Rate := B9600;
+         when 19200 =>
+            Rate := B19200;
+         when 38400 =>
+            Rate := B38400;
+         when 57600 =>
+            Rate := B57600;
+         when others =>
+            Rate := B115200;
+      end case;
 
-      Config.Mode := Mode_AF;
-      Config.Speed := Speed_50MHz;
-      Config.Output_Type := Push_Pull;
-      Config.Resistors := Pull_Up;
-
-      Configure_IO(Device_Pins, Config);
-      Configure_Alternate_Function(Device_Pins, GPIO_Alternate_Function);
-
-      -- Setup peripheral
-      Disable(USART);
-
-      Set_Baud_Rate(USART, Baud_Rates(BC));
-      Set_Mode(USART, Tx_Rx_Mode);
-      Set_Stop_Bits(USART, End_Bits);
-      Set_Word_Length(USART, Data_Bits);
-      Set_Parity(USART, Parity);
-      Set_Flow_Control(USART, Control);
-
-      Enable(USART);
-
+      Set(Port => G_Port,
+          Rate => Rate,
+          Bits => Bits,
+          Stop_Bits => End_Bits,
+          Parity => Parity,
+          Flow => Control);
       Is_Init := True;
    end Communication_Init;
 
    procedure Serial_TX (Payload : Serial_Payload) is
+      Buffer : Stream_Element_Array(1 .. Payload'Size / 8)
+        with Address => Payload'Address;
    begin
-      for I in 1 .. Payload'Length loop
-	 Await_Send_Ready;
-	 Transmit(USART, Payload(I));
-      end loop;
+      Write(Port => G_Port,
+            Buffer => Buffer);
    end Serial_TX;
 
    function Serial_RX (Msg_Size : Integer) return Serial_Payload is
       Ret : Serial_Payload(1 .. Msg_Size);
+      Buffer : Stream_Element_Array(1 .. Ret'Size / 8)
+        with Address => Ret'Address;
+      Index : Stream_Element_Offset := 0;
    begin
-      for I in 1 .. Msg_Size loop
-	 Await_Data_Available;
-	 Receive(USART, Ret(I));
+      while Integer(Index) < Msg_Size loop
+         Read(Port => G_Port,
+              Buffer => Buffer,
+              Last => Index);
       end loop;
+      return Ret;
    end Serial_RX;
 
    procedure Set_Host_Baud (BC : Integer) is
    begin
-      Disable(USART);
-      Set_Baud_Rate(USART, Baud_Rates(BC));
-      Enable(USART);
+      null;
    end Set_Host_Baud;
+
+   procedure Communications_Close is
+   begin
+      GNAT.Serial_Communications.Close(Port => G_Port);
+      Is_Init := False;
+   end Communications_Close;
 
 end Communication;

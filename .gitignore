@@ -1,2 +1,9 @@
 *.pdf
 obj/
+*.o
+*.ali
+*.db
+*.db-shm
+*.db-wal
+*.cgpr
+*.exe

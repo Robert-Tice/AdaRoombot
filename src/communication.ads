@@ -54,8 +54,7 @@ package Communication is
    procedure Set_Host_Baud (BC : Integer)
      with Pre => Is_Init or else raise Comm_Uninit_Exception;
 
-private
+   procedure Communications_Close
+     with Post => not Is_Init or else raise Comm_Uninit_Exception;
 
-   procedure Await_Send_Ready with Inline;
-   procedure Await_Data_Available with Inline;
 end Communication;

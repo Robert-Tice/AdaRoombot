@@ -28,16 +28,24 @@
 ------------------------------------------------------------------------------
 
 with Communication; use Communication;
-with Sensors; use Sensors;
+with Commands; use Commands;
 
 
 package body Mode is
 
    procedure Read_Mode_From_Target is
-      Pkt : Serial_Payload(0 .. 0);
+      Pkt : Sensor_Data (S => OI_Mode);
+      Comm : Comm_Rec (Op => Sensors_Single);
+      Raw_TX : Serial_Payload (1 .. Comm'Size / 8)
+        with Address => Comm'Address;
+      Raw_RX : Serial_Payload (1 .. Pkt'Size / 8)
+        with Address => Pkt'Address;
    begin
-      Pkt := Get_Sensor_Single(OI_Mode);
-      Current_Mode := Interface_Mode'Val(Pkt(0));
+      --  Use raw commands to bypass mode checks associated with Get_Sensor calls
+      Comm.Sensor_Packet_ID := OI_Mode;
+      Serial_TX (Raw_TX);
+      Raw_RX := Serial_RX (Pkt'Size / 8);
+      Current_Mode := Interface_Mode'Val(Pkt.Current_Mode);
    end Read_Mode_From_Target;
 
    function Get_Mode return Interface_Mode is
@@ -53,10 +61,12 @@ package body Mode is
    end Get_Mode;
 
    procedure Change_Mode (Set_Mode : Interface_Mode) is
+  --    Rec : Comm_Rec (Op => OI_Mode);
    begin
       if Set_Mode /= Current_Mode then
-	 Current_Mode := Set_Mode;
-	 -- TODO: send change mode command here
+         Current_Mode := Set_Mode;
+      --   Rec.Current_Mode := Set_Mode;
+--	 Send_Command (Rec);
       end if;
 
    end Change_Mode;
