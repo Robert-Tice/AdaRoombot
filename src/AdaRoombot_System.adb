@@ -29,46 +29,46 @@
 
 with Commands; use Commands;
 with Communication; use Communication;
+with Mode; use Mode;
 
 with Ada.Real_Time; use Ada.Real_Time;
+with Ada.Streams;
 
 procedure AdaRoombot_System is
 
-   Is_Init : Boolean := False;
-   Rx_Data : Sensor_Data (S => Charging_Sources_Avail);
+    --    Rx_Data : Sensor_Data (S => Charging_Sources_Avail);
+    Port : access Ada.Streams.Root_Stream_Type'Class := Communication_Init;
 
-   procedure System_Init is
-   begin
-      Communication_Init;
-      Is_Init := True;
-   end System_Init;
-
-   procedure System_Cleanup is
-   begin
-      Communications_Close;
-      Is_Init := False;
-   end System_Cleanup;
-
-   function Now return Time is
-   begin
-      return Clock;
-   end Now;
+    function Now return Time
+    is
+    begin
+        return Clock;
+    end Now;
 
 begin
-   System_Init;
-   Send_Command (Comm_Rec'(Op => Start));
-   Send_Command (Comm_Rec'(Op => Mode_Safe));
-   Send_Command (Comm_Rec'(Op => Clean));
-   delay until (Now + Seconds (10));
-   Send_Command (Comm_Rec'(Op => Seek_Dock));
+    Send_Command (Port => Port,
+                  Rec  => Comm_Rec'(Op => Start),
+                  Unsafe => True);
+--      Read_Mode_From_Target (Port => Port);
+--      Send_Command (Port => Port,
+--                    Rec  => Comm_Rec'(Op => Mode_Safe));
+--      Send_Command (Port => Port,
+--                    Rec  => Comm_Rec'(Op => Clean));
 
-   loop
-      Rx_Data := Get_Sensor_Single (Charging_Sources_Avail);
-      exit when Rx_Data.Home_Base;
-      delay until (Now + Milliseconds (50));
-   end loop;
+    delay until (Now + Seconds (1));
 
-   Send_Command (Comm_Rec'(Op => Stop));
-   System_Cleanup;
+--      Send_Command (Port => Port,
+--                    Rec  => Comm_Rec'(Op => Seek_Dock));
+--
+--      loop
+--          Rx_Data := Get_Sensor_Single (Port => Port,
+--                                        Pkt  => Charging_Sources_Avail);
+--          exit when Rx_Data.Home_Base;
+--          delay until (Now + Milliseconds (50));
+--      end loop;
+--
+--      Send_Command (Port => Port,
+--                    Rec  => Comm_Rec'(Op => Stop));
+    Communications_Close (Port);
 
 end AdaRoombot_System;

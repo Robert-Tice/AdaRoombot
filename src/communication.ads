@@ -27,34 +27,41 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
-
+with Ada.Streams;
 
 package Communication is
 
-   Default_Baud : constant Integer := 115_200;
-   Is_Init : Boolean := False;
-   Baud : Integer := Default_Baud;
+    type Baud_Code is
+      (B300,
+       B600,
+       B1200,
+       B2400,
+       B4800,
+       B9600,
+       B14400,
+       B19200,
+       B28800,
+       B38400,
+       B57600,
+       B115200);
 
-   type Serial_Byte is new Integer range 0 .. 255
-     with Size => 8;
-   type Serial_Payload is array (Integer range <>) of Serial_Byte
-     with Pack;
+    Default_Baud    : constant Baud_Code := B115200;
+    Default_COM_Num : constant Natural := 15;
+    Is_Init         : Boolean := False;
 
-   Comm_Uninit_Exception : exception;
+    Comm_Uninit_Exception : exception;
 
-   procedure Communication_Init (BC : Integer := Default_Baud)
-     with Post => Is_Init or else raise Comm_Uninit_Exception;
+    function Communication_Init (BC      : Baud_Code := Default_Baud;
+                                 COM_Num : Natural := Default_COM_Num)
+                                 return access Ada.Streams.Root_Stream_Type'Class
+      with Post => Is_Init or else raise Comm_Uninit_Exception;
 
-   procedure Serial_TX (Payload : Serial_Payload)
-     with Pre => Is_Init or else raise Comm_Uninit_Exception;
+    procedure Set_Host_Baud (Port : access Ada.Streams.Root_Stream_Type'Class;
+                             BC   : Integer)
+      with Pre => Is_Init or else raise Comm_Uninit_Exception;
 
-   function Serial_RX (Msg_Size : Integer) return Serial_Payload
-     with Pre => Is_Init or else raise Comm_Uninit_Exception;
+    procedure Communications_Close (Port : access Ada.Streams.Root_Stream_Type'Class)
+      with Post => not Is_Init or else raise Comm_Uninit_Exception;
 
-   procedure Set_Host_Baud (BC : Integer)
-     with Pre => Is_Init or else raise Comm_Uninit_Exception;
-
-   procedure Communications_Close
-     with Post => not Is_Init or else raise Comm_Uninit_Exception;
 
 end Communication;

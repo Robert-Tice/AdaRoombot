@@ -6,8 +6,7 @@ project AdaRoombot_Win32 is
    for Main use ("AdaRoombot_System.adb");
 
    package Builder is
-      for Global_Configuration_Pragmas use "gnat.adc";
-      for Switches ("ada") use ("-g", "-C", "-j4");
+      for Switches ("ada") use ("-g", "-j4", "-v");
    end Builder;
 
    package Compiler is
@@ -15,7 +14,6 @@ project AdaRoombot_Win32 is
    end Compiler;
 
    package Linker is
-      for Switches ("ada") use ("-g", "-fprofile-generate");
    end Linker;
 
 end AdaRoombot_Win32;

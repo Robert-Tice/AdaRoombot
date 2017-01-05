@@ -29,138 +29,180 @@
 
 with Mode; use Mode;
 
+with Ada.Streams; use Ada.Streams;
+
 package body Commands is
 
-   Invalid_Mode_Exception : exception;
+    Invalid_Mode_Exception : exception;
 
-   function Check_Valid_Mode (Op : Opcode) return Boolean is
-      Md : Interface_Mode;
-      Valid : Boolean;
-   begin
-      Md := Get_Mode;
-      case Op is
-      when Start | Stop | Baud | Mode_Safe | Mode_Full | Clean | Max_Clean |
-           Spot_Clean | Seek_Dock | Power | Schedule | Set_Day_Time | Buttons |
-           Song | Sensors_Single | Sensors_List | Sensors_Stream |
-           Pause_Resume_Stream =>
-         case Md is
-         when Passive | Safe | Full =>
+    function Check_Valid_Mode (Op : Opcode) return Boolean
+    is
+        Md    : Interface_Mode;
+        Valid : Boolean;
+    begin
+        Md := Get_Mode;
+        case Op is
+        when Start | Stop | Baud | Mode_Safe | Mode_Full | Clean | Max_Clean |
+             Spot_Clean | Seek_Dock | Power | Schedule | Set_Day_Time | Buttons |
+             Song | Sensors_Single | Sensors_List | Sensors_Stream |
+             Pause_Resume_Stream =>
+            case Md is
+            when Passive | Safe | Full =>
+                Valid := True;
+            when others =>
+                Valid := False;
+            end case;
+        when Drive | Drive_Direct | Drive_PWM | Motors | PWM_Motors |
+             LEDs | Scheduling_LEDs | Digital_LEDs_Raw | Digital_LEDs_ASCII |
+             Play =>
+            case Md is
+            when Safe | Full =>
+                Valid := True;
+            when others =>
+                Valid := False;
+            end case;
+        when others =>
             Valid := True;
-         when others =>
-            Valid := False;
-         end case;
-      when Drive | Drive_Direct | Drive_PWM | Motors | PWM_Motors |
-           LEDs | Scheduling_LEDs | Digital_LEDs_Raw | Digital_LEDs_ASCII |
-           Play =>
-         case Md is
-         when Safe | Full =>
-            Valid := True;
-         when others =>
-            Valid := False;
-         end case;
-      when others =>
-         Valid := True;
-      end case;
+        end case;
 
-      return Valid;
-   end Check_Valid_Mode;
+        return Valid;
+    end Check_Valid_Mode;
 
-   procedure Command_Post (Op : Opcode) is
-   begin
-      case Op is
-      when Start | Clean | Max_Clean | Spot_Clean | Seek_Dock | Power =>
-         Effect_Mode_Changed (Passive);
-      when Reset | Stop =>
-         Effect_Mode_Changed (Off);
-      when Mode_Safe =>
-         Effect_Mode_Changed (Safe);
-      when Mode_Full =>
-         Effect_Mode_Changed (Full);
-      when others =>
-         null;
-      end case;
-   end Command_Post;
+    procedure Command_Post (Op : Opcode)
+    is
+    begin
+        case Op is
+        when Start | Clean | Max_Clean | Spot_Clean | Seek_Dock | Power =>
+            Effect_Mode_Changed (Passive);
+        when Reset | Stop =>
+            Effect_Mode_Changed (Off);
+        when Mode_Safe =>
+            Effect_Mode_Changed (Safe);
+        when Mode_Full =>
+            Effect_Mode_Changed (Full);
+        when others =>
+            null;
+        end case;
+    end Command_Post;
 
-   procedure Send_Command (Rec : Comm_Rec) is
-      Raw : Serial_Payload (1 .. Rec'Size / 8)
-        with Address => Rec'Address;
-   begin
+    procedure Send_Command (Port : access Ada.Streams.Root_Stream_Type'Class;
+                            Rec  : Comm_Rec;
+                            Unsafe : Boolean := False)
+    is
+        Raw_TX : Ada.Streams.Stream_Element_Array (1 .. Rec'Size / 8)
+          with Address => Rec'Address;
+    begin
+        if not Unsafe then
+            if not Check_Valid_Mode (Rec.Op) then
+                raise Invalid_Mode_Exception;
+                return;
+            end if;
+        end if;
 
-      if not Check_Valid_Mode (Rec.Op) then
-         raise Invalid_Mode_Exception;
-         return;
-      end if;
+        --          Comm_Rec'Output (Port, Rec);
+        Write (Stream => Port.all,
+               Item   => Raw_TX);
 
-      Serial_TX (Raw);
+        Command_Post (Rec.Op);
+    end Send_Command;
 
-      Command_Post (Rec.Op);
-   end Send_Command;
+    procedure Send_Command (Port : access Ada.Streams.Root_Stream_Type'Class;
+                            Rec  : Comm_Rec;
+                            Data : Stream_Element_Array;
+                            Unsafe : Boolean := False)
+    is
+    begin
+        if not Unsafe then
+            if not Check_Valid_Mode (Rec.Op) then
+                raise Invalid_Mode_Exception;
+                return;
+            end if;
+        end if;
 
-   procedure Send_Command (Rec : Comm_Rec; Data : Serial_Payload) is
-      Raw : Serial_Payload (1 .. Rec'Size / 8)
-        with Address => Rec'Address;
-   begin
+        Comm_Rec'Output (Port, Rec);
+        Write (Stream => Port.all,
+               Item   => Data);
 
-      if not Check_Valid_Mode (Rec.Op) then
-         raise Invalid_Mode_Exception;
-         return;
-      end if;
+        Command_Post (Rec.Op);
+    end Send_Command;
 
-      Serial_TX (Raw & Data);
+    function Construct_Baud (BC : Baud_Code) return Comm_Rec
+    is
+        SData : Comm_Rec (Baud);
+    begin
+        SData.Baud_Rate := Baud_Code'Pos (BC);
+        return SData;
+    end Construct_Baud;
 
-      Command_Post (Rec.Op);
-   end Send_Command;
+    function Construct_Date_Time (D : Day; H : Hour; M : Minute) return Comm_Rec
+    is
+        SData : Comm_Rec (Set_Day_Time);
+    begin
+        SData.Dy := Day'Pos (D);
+        SData.Hr := H;
+        SData.Min := M;
+        return SData;
+    end Construct_Date_Time;
 
-   function Construct_Baud (BC : Baud_Code) return Comm_Rec is
-      SData : Comm_Rec (Baud);
-   begin
-      SData.Baud_Rate := Baud_Code'Pos (BC);
-      return SData;
-   end Construct_Baud;
+    function Construct_Drive_Special (Special : Drive_Special)
+                                      return Comm_Rec
+    is
+        SData : Comm_Rec (Drive);
+    begin
+        case Special is
+        when Straight =>
+            SData.Rad := 32767;
+        when CW =>
+            SData.Rad := -1;
+        when CCW =>
+            SData.Rad := 1;
+        end case;
+        return SData;
+    end Construct_Drive_Special;
 
-   function Construct_Date_Time (D : Day; H : Hour; M : Minute) return Comm_Rec
-   is
-      SData : Comm_Rec (Set_Day_Time);
-   begin
-      SData.Dy := Day'Pos (D);
-      SData.Hr := H;
-      SData.Min := M;
-      return SData;
-   end Construct_Date_Time;
+    function Sensor_Data_Size_Bytes (SD : Sensor_Data) return Integer
+    is
+    begin
+        return ((SD'Size / 8));
+    end Sensor_Data_Size_Bytes;
 
-   function Construct_Drive_Special (Special : Drive_Special)
-                                     return Comm_Rec is
-      SData : Comm_Rec (Drive);
-   begin
-      case Special is
-      when Straight =>
-         SData.Rad := 32767;
-      when CW =>
-         SData. Rad := -1;
-      when CCW =>
-         SData.Rad := 1;
-      end case;
-      return SData;
-   end Construct_Drive_Special;
+    function Get_Sensor_Single (Port : access Ada.Streams.Root_Stream_Type'Class;
+                                Pkt  : Sensor_Packets;
+                                Skip : Boolean := False)
+                                return Sensor_Data
+    is
+        Sensor : Sensor_Data (Pkt);
+        Comm   : Comm_Rec (Op => Sensors_Single);
+--          RX_Raw    : Ada.Streams.Stream_Element_Array (1 .. Sensor'Size / 8)
+--           with Address => Sensor'Address;
+        Last : Stream_Element_Offset := 0;
+    begin
+        if not Skip then
+            if not Check_Valid_Mode (Op => Sensors_Single) then
+                raise Invalid_Mode_Exception;
+            end if;
+        end if;
 
-   function Get_Sensor_Single (Pkt : Sensor_Packets) return Sensor_Data is
-      Ret : Sensor_Data (Pkt);
-      Raw : Serial_Payload (1 .. Ret'Size / 8)
-        with Address => Ret'Address;
-   begin
-      Send_Command (Comm_Rec'(Op => Sensors_Single, Sensor_Packet_ID => Pkt));
-      Raw := Serial_RX (Ret'Size / 8);
-      return Ret;
-   end Get_Sensor_Single;
+        Comm.Sensor_Packet_ID := Pkt;
 
---     function Get_Sensor_List (List : Sensor_Array) return Serial_Payload is
---        Ret : Serial_Payload (1 .. List'Length);
---        Payload : Serial_Payload (1 .. List'Size / 8)
---          with Address => List'Address;
---     begin
---        Send_Command (Comm_Rec'(Op => Query_List), Payload);
---        Ret := Serial_RX (Ret'Length);
---        return Ret;
---     end Get_Sensor_List;
+        Comm_Rec'Output (Port, Comm);
+        Sensor_Data'Read (Port, Sensor);
+
+--          Read (Stream => Port.all,
+--                Item   => RX_Raw,
+--                Last   => Last);
+
+        return Sensor;
+    end Get_Sensor_Single;
+
+    --     function Get_Sensor_List (List : Sensor_Array) return Serial_Payload is
+    --        Ret : Serial_Payload (1 .. List'Length);
+    --        Payload : Serial_Payload (1 .. List'Size / 8)
+    --          with Address => List'Address;
+    --     begin
+    --        Send_Command (Comm_Rec'(Op => Query_List), Payload);
+    --        Ret := Serial_RX (Ret'Length);
+    --        return Ret;
+    --     end Get_Sensor_List;
 
 end Commands;

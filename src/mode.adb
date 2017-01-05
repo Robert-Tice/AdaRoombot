@@ -30,51 +30,43 @@
 with Communication; use Communication;
 with Commands; use Commands;
 
+with Ada.Streams;
 
 package body Mode is
 
-   procedure Read_Mode_From_Target is
-      Pkt : Sensor_Data (S => OI_Mode);
-      Comm : Comm_Rec (Op => Sensors_Single);
-      Raw_TX : Serial_Payload (1 .. Comm'Size / 8)
-        with Address => Comm'Address;
-      Raw_RX : Serial_Payload (1 .. Pkt'Size / 8)
-        with Address => Pkt'Address;
-   begin
-      --  Use raw commands to bypass mode checks associated with Get_Sensor calls
-      Comm.Sensor_Packet_ID := OI_Mode;
-      Serial_TX (Raw_TX);
-      Raw_RX := Serial_RX (Pkt'Size / 8);
-      Current_Mode := Interface_Mode'Val(Pkt.Current_Mode);
-   end Read_Mode_From_Target;
+    procedure Read_Mode_From_Target (Port : access Ada.Streams.Root_Stream_Type'Class)
+    is
+        Pkt : Sensor_Data (S => OI_Mode);
+    begin
+        Pkt := Get_Sensor_Single (Port => Port,
+                                  Pkt  => OI_Mode,
+                                  Skip => True);
+        Current_Mode := Interface_Mode'Val (Pkt.Current_Mode);
+    end Read_Mode_From_Target;
 
-   function Get_Mode return Interface_Mode is
-   begin
-      case Current_Mode is
-      when Uninit =>
-	 Read_Mode_From_Target;
-      when others=>
-	 null;
-      end case;
+    function Get_Mode return Interface_Mode
+    is
+    begin
+        return Current_Mode;
+    end Get_Mode;
 
-      return Current_Mode;
-   end Get_Mode;
+    procedure Change_Mode (Set_Mode : Interface_Mode)
+    is
+        --    Rec : Comm_Rec (Op => OI_Mode);
+    begin
+        if Set_Mode /= Current_Mode then
+            Current_Mode := Set_Mode;
+            --   Rec.Current_Mode := Set_Mode;
+            --	 Send_Command (Rec);
+        end if;
 
-   procedure Change_Mode (Set_Mode : Interface_Mode) is
-  --    Rec : Comm_Rec (Op => OI_Mode);
-   begin
-      if Set_Mode /= Current_Mode then
-         Current_Mode := Set_Mode;
-      --   Rec.Current_Mode := Set_Mode;
---	 Send_Command (Rec);
-      end if;
+    end Change_Mode;
 
-   end Change_Mode;
-
-   procedure Effect_Mode_Changed (Set_Mode : Interface_Mode) is
-   begin
-      Current_Mode := Set_Mode;
-   end Effect_Mode_Changed;
+    procedure Effect_Mode_Changed (Set_Mode : Interface_Mode)
+    is
+    begin
+        Current_Mode := Set_Mode;
+    end Effect_Mode_Changed;
 
 
 end Mode;

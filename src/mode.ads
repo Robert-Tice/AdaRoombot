@@ -26,24 +26,26 @@
 --  however invalidate any other reasons why the executable file  might be  --
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
+with Ada.Streams;
 
 package Mode is
 
-   type Interface_Mode is
-     (Off,
-      Passive, -- This mode is used for automatic procedures like cleaning and docking
-      Safe,
-      Full,
-      Uninit);
+    type Interface_Mode is
+      (Off,
+       Passive, -- This mode is used for automatic procedures like cleaning and docking
+       Safe,
+       Full,
+       Uninit);
 
-   function Get_Mode return Interface_Mode;
-   procedure Change_Mode (Set_Mode : Interface_Mode);
+    Current_Mode : Interface_Mode := Uninit;
 
-   procedure Effect_Mode_Changed (Set_Mode : Interface_Mode);
+    function Get_Mode return Interface_Mode
+      with Pre => Current_Mode /= Uninit;
 
-private
-   Current_Mode : Interface_Mode := Uninit;
+    procedure Change_Mode (Set_Mode : Interface_Mode);
 
-   procedure Read_Mode_From_Target;
+    procedure Effect_Mode_Changed (Set_Mode : Interface_Mode);
+
+    procedure Read_Mode_From_Target (Port : access Ada.Streams.Root_Stream_Type'Class);
 
 end Mode;
