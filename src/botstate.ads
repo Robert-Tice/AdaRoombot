@@ -27,46 +27,28 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
+with Ada.Streams; use Ada.Streams;
+
 with Communication; use Communication;
-with Commands; use Commands;
+with Types; use Types;
 
-with Ada.Streams;
+package Botstate is
 
-package body Mode is
+    protected Bot_Interface is
+        procedure Initd;
+        entry Wait_For_Init;
+        procedure Set (Raw_Array : in Stream_Element_Array);
+        entry Get (Collection : out Sensor_Collection);
+    private
+        Sensors  : Sensor_Collection;
+        Sem      : Boolean := False;
+        Init     : Boolean := False;
+    end Bot_Interface;
 
-    procedure Read_Mode_From_Target (Port : access Ada.Streams.Root_Stream_Type'Class)
-    is
-        Pkt : Sensor_Data (S => OI_Mode);
-    begin
-        Pkt := Get_Sensor_Single (Port => Port,
-                                  Pkt  => OI_Mode,
-                                  Skip => True);
-        Current_Mode := Interface_Mode'Val (Pkt.Current_Mode);
-    end Read_Mode_From_Target;
+    Port : Comm_Port := Communication_Init;
 
-    function Get_Mode return Interface_Mode
-    is
-    begin
-        return Current_Mode;
-    end Get_Mode;
-
-    procedure Change_Mode (Set_Mode : Interface_Mode)
-    is
-        --    Rec : Comm_Rec (Op => OI_Mode);
-    begin
-        if Set_Mode /= Current_Mode then
-            Current_Mode := Set_Mode;
-            --   Rec.Current_Mode := Set_Mode;
-            --	 Send_Command (Rec);
-        end if;
-
-    end Change_Mode;
-
-    procedure Effect_Mode_Changed (Set_Mode : Interface_Mode)
-    is
-    begin
-        Current_Mode := Set_Mode;
-    end Effect_Mode_Changed;
+    task Feedback;
+    task Control;
 
 
-end Mode;
+end Botstate;

@@ -27,48 +27,26 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
+with Botstate; use Botstate;
 with Commands; use Commands;
 with Communication; use Communication;
-with Mode; use Mode;
 
-with Ada.Real_Time; use Ada.Real_Time;
-with Ada.Streams;
+with System;
 
 procedure AdaRoombot_System is
-
-    --    Rx_Data : Sensor_Data (S => Charging_Sources_Avail);
-    Port : access Ada.Streams.Root_Stream_Type'Class := Communication_Init;
-
-    function Now return Time
-    is
-    begin
-        return Clock;
-    end Now;
-
+    pragma Priority (System.Priority'First);
 begin
     Send_Command (Port => Port,
-                  Rec  => Comm_Rec'(Op => Start),
-                  Unsafe => True);
---      Read_Mode_From_Target (Port => Port);
---      Send_Command (Port => Port,
---                    Rec  => Comm_Rec'(Op => Mode_Safe));
---      Send_Command (Port => Port,
---                    Rec  => Comm_Rec'(Op => Clean));
-
-    delay until (Now + Seconds (1));
-
---      Send_Command (Port => Port,
---                    Rec  => Comm_Rec'(Op => Seek_Dock));
---
---      loop
---          Rx_Data := Get_Sensor_Single (Port => Port,
---                                        Pkt  => Charging_Sources_Avail);
---          exit when Rx_Data.Home_Base;
---          delay until (Now + Milliseconds (50));
---      end loop;
---
---      Send_Command (Port => Port,
---                    Rec  => Comm_Rec'(Op => Stop));
-    Communications_Close (Port);
-
+                  Rec  => Comm_Rec'(Op => Start));
+    Clear_Comm_Buffer (Port => Port);
+    Send_Command (Port => Port,
+                  Rec  => Comm_Rec'(Op => Mode_Safe));
+    Send_Command (Port => Port,
+                  Rec  => Comm_Rec'(Op   => Digital_LEDs_ASCII,
+                                    Text => "HI!!"));
+    Bot_Interface.Initd;
+    loop
+        null;
+    end loop;
 end AdaRoombot_System;
+

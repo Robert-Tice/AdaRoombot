@@ -26,26 +26,88 @@
 --  however invalidate any other reasons why the executable file  might be  --
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
-with Ada.Streams;
 
-package Mode is
+with Ada.Real_Time; use Ada.Real_Time;
 
-    type Interface_Mode is
-      (Off,
-       Passive, -- This mode is used for automatic procedures like cleaning and docking
-       Safe,
-       Full,
-       Uninit);
+with Algorithm; use Algorithm;
+with Commands; use Commands;
+with System; use System;
 
-    Current_Mode : Interface_Mode := Uninit;
+package body Botstate is
 
-    function Get_Mode return Interface_Mode
-      with Pre => Current_Mode /= Uninit;
+    protected body Bot_interface is
+        procedure Set (Raw_Array : in Stream_Element_Array)
+        is
+            Elem_Array : Stream_Element_Array (1 .. Raw_Array'Length)
+              with Address => Sensors'Address;
+        begin
+            Elem_Array := Raw_Array;
+            Sem := True;
+        end Set;
 
-    procedure Change_Mode (Set_Mode : Interface_Mode);
+        entry Get (Collection : out Sensor_Collection)
+          when Sem
+        is
+        begin
+            Collection := Sensors;
+            Sem := False;
+        end Get;
 
-    procedure Effect_Mode_Changed (Set_Mode : Interface_Mode);
+        procedure Initd
+        is
+        begin
+            Init := True;
+        end Initd;
 
-    procedure Read_Mode_From_Target (Port : access Ada.Streams.Root_Stream_Type'Class);
+        entry Wait_For_Init
+          when Init
+        is begin
+            null;
+        end Wait_For_Init;
 
-end Mode;
+    end Bot_Interface;
+
+    task body Feedback
+    is
+        Raw_RX  : Stream_Element_Array (1 .. 80);
+        Last    : Stream_Element_Offset := 0;
+
+        Next_Read : Time := Clock;
+        Period    : constant Time_Span := Milliseconds (20);
+
+    begin
+        Bot_Interface.Wait_For_Init;
+        loop
+            Send_Command (Port   => Port,
+                          Rec    => Comm_Rec'(Op                 => Sensors_List,
+                                              Num_Query_Packets => 1),
+                          Data   => (0 => 100));
+            Read (Stream => Port.all,
+                  Item   => Raw_RX,
+                  Last   => Last);
+            Bot_Interface.Set (Raw_Array => Raw_RX);
+            Next_Read := Next_Read + Period;
+            delay until Next_Read;
+        end loop;
+    end Feedback;
+
+    task body Control
+    is
+        Algo : Pong_Algorithm;
+    begin
+        Algo.Port := Port;
+        Bot_Interface.Wait_For_Init;
+        loop
+            Bot_Interface.Get (Collection => Algo.Sensors);
+            Algo.Safety_Check;
+            Algo.Process;
+        end loop;
+    exception
+        when Safety_Exception =>
+            raise Safety_Exception;
+        when others =>
+            null;
+    end Control;
+
+
+end Botstate;

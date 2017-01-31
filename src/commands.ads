@@ -28,21 +28,12 @@
 ------------------------------------------------------------------------------
 
 with Communication; use Communication;
+with Types; use Types;
 
 with Ada.Streams;
+with System; use System;
 
 package Commands is
-
-    type Day is
-      (Sunday, Monday, Tuesday, Wednesday,
-       Thursday, Friday, Saturday);
-
-    type Hour is new Integer range 0 .. 23;
-    type Minute is new Integer range 0 .. 59;
-
-    type Velocity is new Integer range -500 .. 500;
-    type Radius is new Integer range -32768 .. 32767
-      with Static_Predicate => Radius in -2000 .. 2000 | -32768 | 32767;
 
     type Drive_Special is
       (Straight,
@@ -63,8 +54,7 @@ package Commands is
       with Pack;
 
     type Opcode is
-      (
-       Reset,
+      (Reset,
        Start,
        Baud,
        Mode_Safe,
@@ -155,7 +145,7 @@ package Commands is
        IR_Char_Omni,
        Buttons,
        Distance,
-       Angle,
+       Ang,
        Charging_State,
        Voltage,
        Current,
@@ -191,7 +181,7 @@ package Commands is
        Right_Motor_Current,
        Main_Brush_Motor_Current,
        Side_Brush_Motor_Current,
-       Stasis) with Size => 8;
+       Stasis);
 
     for Sensor_Packets use
       (Bumps_And_Wheel_Drops          => 7,
@@ -206,7 +196,7 @@ package Commands is
        IR_Char_Omni                   => 17,
        Buttons                        => 18,
        Distance                       => 19,
-       Angle                          => 20,
+       Ang                            => 20,
        Charging_State                 => 21,
        Voltage                        => 22,
        Current                        => 23,
@@ -330,10 +320,7 @@ package Commands is
             F0_Seg             : Boolean;
             G0_Seg             : Boolean;
         when Digital_LEDs_ASCII =>
-            Digital_3_ASCII    : Integer range 32 .. 126;
-            Digital_2_ASCII    : Integer range 32 .. 126;
-            Digital_1_ASCII    : Integer range 32 .. 126;
-            Digital_0_ASCII    : Integer range 32 .. 126;
+            Text               : String(1 .. 4);
         when Buttons =>
             Clean_Button       : Boolean;
             Spot_Button        : Boolean;
@@ -355,113 +342,6 @@ package Commands is
         end case;
     end record
       with Pack, Alignment => 1;
-
-    type Charging_State_Code is
-      (Not_Charging,
-       Reconditioning_Charging,
-       Full_Charging,
-       Trickle_Charging,
-       Waiting,
-       Charging_Fault_Condition)
-      with Size => 8;
-
-    type Sensor_Data (S : Sensor_Packets) is record
-        case S is
-        when Bumps_And_Wheel_Drops =>
-            Bump_Right           : Boolean;
-            Bump_Left            : Boolean;
-            Wheel_Drop_Right     : Boolean;
-            Wheel_Drop_Left      : Boolean;
-        when Wall | Virtual_Wall =>
-            Seen                 : Boolean;
-        when Cliff_Left | Cliff_Front_Left | Cliff_Front_Right | Cliff_Right =>
-            Cliff                : Boolean;
-        when Wheel_Overcurrent =>
-            Side_Brush_OC        : Boolean;
-            Main_Brush_OC        : Boolean;
-            Right_Wheel_OC       : Boolean;
-            Left_Wheel_OC        : Boolean;
-        when Dirt_Detect =>
-            Dirt_Level           : Integer range 0 .. 255;
-        when IR_Char_Omni | IR_Char_Left | IR_Char_Right =>
-            IR_Char              : Character;
-        when Buttons =>
-            Clean_But            : Boolean;
-            Spot_But             : Boolean;
-            Dock_But             : Boolean;
-            Minute_But           : Boolean;
-            Hour_But             : Boolean;
-            Day_But              : Boolean;
-            Schedule_But         : Boolean;
-            Clock_But            : Boolean;
-        when Distance =>
-            Dis                  : Integer range -32768 .. 32767;
-        when Angle =>
-            Angle_Turned         : Integer range -32768 .. 32767;
-        when Charging_State =>
-            Charge_State         : Charging_State_Code;
-        when Voltage =>
-            Battery_MV           : Integer range 0 .. 65535;
-        when Current =>
-            Battery_MA           : Integer range -32768 .. 32767;
-        when Temperature =>
-            Temp_C               : Integer range -128 .. 127;
-        when Battery_Charge | Battery_Capacity =>
-            Battery_MAh          : Integer range 0 .. 65535;
-        when Wall_Signal =>
-            WSignal              : Integer range 0 .. 1023;
-        when Cliff_Left_Signal | Cliff_Front_Left_Signal |
-             Cliff_Front_Right_Signal | Cliff_Right_Signal |
-             Light_Bump_Left_Signal | Light_Bump_Front_Left_Signal |
-             Light_Bump_Center_Left_Signal | Light_Bump_Center_Right_Signal |
-             Light_Bump_Front_Right_Signal | Light_Bump_Right_Signal =>
-            Signal_Strength      : Integer range 0 .. 4095;
-        when Charging_Sources_Avail =>
-            Internal_Charger     : Boolean;
-            Home_Base            : Boolean;
-        when OI_Mode =>
-            Current_Mode         : Integer range 0 .. 3;
-        when Song_Number =>
-            Song_Num             : Integer range 0 .. 15;
-        when Song_Playing =>
-            Playing              : Boolean;
-        when Number_Stream_Packets =>
-            Num_Pkts             : Integer range 0 .. 108;
-        when Req_Velocity | Req_Right_Velocity | Req_Left_Velocity =>
-            Vel                  : Velocity;
-        when Req_Radius =>
-            Rad                  : Radius;
-        when Left_Encoder_Counts | Right_Encoder_Counts =>
-            Counts               : Integer range -32768 .. 32767;
-        when Light_Bumper =>
-            LT_Bump_Left         : Boolean;
-            LT_Bump_Front_Left   : Boolean;
-            LT_Bump_Center_Left  : Boolean;
-            LT_Bump_Center_Right : Boolean;
-            LT_Bump_Front_Right  : Boolean;
-            LT_Bump_Right        : Boolean;
-        when Left_Motor_Current | Right_Motor_Current |
-             Main_Brush_Motor_Current | Side_Brush_Motor_Current =>
-            Motor_Current        : Integer range -32767 .. 32767;
-        when Stasis =>
-            Stasis_Toggling      : Boolean;
-            Stasis_Disabled      : Boolean;
-        end case;
-    end record
-      with Pack, Alignment => 1;
-
-    function Sensor_Data_Size_Bytes (SD : Sensor_Data) return Integer
-      with Inline;
-
-    type Sensor_List is array (Integer range <>) of Sensor_Packets;
-    --  type Sensor_Array is array (Integer range <>) of Sensor_Data;
-
-    function Get_Sensor_Single (Port : access Ada.Streams.Root_Stream_Type'Class;
-                                Pkt  : Sensor_Packets;
-                                Skip : Boolean := False)
-                                return Sensor_Data;
-    --   function Get_Sensor_List (List : Sensor_List) return Sensor_Array;
-    --  TODO: figure out sensor stream definiton
 
     --  Representation clause
     for Comm_Rec use record
@@ -547,10 +427,7 @@ package Commands is
         F0_Seg at 4 range 5 .. 5;
         G0_Seg at 4 range 6 .. 6;
         --  Digital LEDs ASCII Fields
-        Digital_3_ASCII at 1 range 0 .. 7;
-        Digital_2_ASCII at 2 range 0 .. 7;
-        Digital_1_ASCII at 3 range 0 .. 7;
-        Digital_0_ASCII at 4 range 0 .. 7;
+        Text at 1 range 0 .. 31;
         --  Button Fields
         Clean_Button at 1 range 0 .. 0;
         Spot_Button at 1 range 1 .. 1;
@@ -577,68 +454,13 @@ package Commands is
     function Construct_Date_Time (D : Day;
                                   H : Hour;
                                   M : Minute) return Comm_Rec;
-    function Construct_Drive_Special (Special : Drive_Special) return Comm_Rec;
+    function Construct_Drive_Special (Special : Drive_Special;
+                                      V       : Velocity)
+                                      return Comm_Rec;
 
-    procedure Send_Command (Port : access Ada.Streams.Root_Stream_Type'Class;
+    procedure Send_Command (Port : Comm_Port;
+                            Rec  : Comm_Rec);
+    procedure Send_Command (Port : Comm_Port;
                             Rec  : Comm_Rec;
-                            Unsafe : Boolean := False);
-    procedure Send_Command (Port : access Ada.Streams.Root_Stream_Type'Class;
-                            Rec  : Comm_Rec;
-                            Data : Ada.Streams.Stream_Element_Array;
-                            Unsafe : Boolean := False);
-
-    for Sensor_Data use record
-        Bump_Right at 0 range 0 .. 0;
-        Bump_Left at 0 range 1 .. 1;
-        Wheel_Drop_Right at 0 range 2 .. 2;
-        Wheel_Drop_Left at 0 range 3 .. 3;
-        Seen at 0 range 0 .. 0;
-        Cliff at 0 range 0 .. 0;
-        Side_Brush_OC at 0 range 0 .. 0;
-        Main_Brush_OC at 0 range 1 .. 1;
-        Right_Wheel_OC at 0 range 2 .. 2;
-        Left_Wheel_OC at 0 range 3 .. 3;
-        Dirt_Level at 0 range 0 .. 7;
-        IR_Char at 0 range 0 .. 7;
-        Clean_But at 0 range 0 .. 0;
-        Spot_But at 0 range 1 .. 1;
-        Dock_But at 0 range 2 .. 2;
-        Minute_But at 0 range 3 .. 3;
-        Hour_But at 0 range 4 .. 4;
-        Day_But at 0 range 5 .. 5;
-        Schedule_But at 0 range 6 .. 6;
-        Clock_But at 0 range 7 .. 7;
-        Dis at 0 range 0 .. 15;
-        Angle_Turned at 0 range 0 .. 15;
-        Charge_State at 0 range 0 .. 7;
-        Battery_MV at 0 range 0 .. 15;
-        Battery_MA at 0 range 0 .. 15;
-        Temp_C at 0 range 0 .. 7;
-        Battery_MAh at 0 range 0 .. 15;
-        WSignal at 0 range 0 .. 15;
-        Signal_Strength at 0 range 0 .. 15;
-        Internal_Charger at 0 range 0 .. 0;
-        Home_Base at 0 range 1 .. 1;
-        Current_Mode at 0 range 0 .. 7;
-        Song_Num at 0 range 0 .. 7;
-        Playing at 0 range 0 .. 0;
-        Num_Pkts at 0 range 0 .. 7;
-        Vel at 0 range 0 .. 15;
-        Rad at 0 range 0 .. 15;
-        Counts at 0 range 0 .. 15;
-        LT_Bump_Left at 0 range 0 .. 0;
-        LT_Bump_Front_Left at 0 range 1 .. 1;
-        LT_Bump_Center_Left at 0 range 2 .. 2;
-        LT_Bump_Center_Right at 0 range 3 .. 3;
-        LT_Bump_Front_Right at 0 range 4 .. 4;
-        LT_Bump_Right at 0 range 5 .. 5;
-        Motor_Current at 0 range 0 .. 15;
-        Stasis_Toggling at 0 range 0 .. 0;
-        Stasis_Disabled at 0 range 1 .. 1;
-    end record;
-
-
-private
-    function Check_Valid_Mode (Op : Opcode) return Boolean;
-    procedure Command_Post (Op : Opcode);
+                            Data : Ada.Streams.Stream_Element_Array);
 end Commands;

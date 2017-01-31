@@ -29,6 +29,7 @@
 
 with Ada.Streams; use Ada.Streams;
 with Ada.Strings;
+with Ada.Text_IO; use Ada.Text_IO;
 
 with GNAT.Serial_Communications; use GNAT.Serial_Communications;
 
@@ -42,11 +43,13 @@ package body Communication is
 
     function Communication_Init (BC      : Baud_Code := Default_Baud;
                                  COM_Num : Natural := Default_COM_Num)
-                                 return access Ada.Streams.Root_Stream_Type'Class
+                                 return Comm_Port
     is
         PName : constant Port_Name := Name (Number => COM_Num);
         Rate  : Data_Rate;
     begin
+        Configd_Baud := BC;
+        Configd_COM_Num := COM_Num;
         Open (Port => G_Port,
               Name => PName);
         case BC is
@@ -77,21 +80,29 @@ package body Communication is
              Bits      => Bits,
              Stop_Bits => End_Bits,
              Parity    => Parity,
-             Block     => True,
+             Block     => False,
              Local     => True,
              Flow      => Control);
         Is_Init := True;
         return G_Port'Access;
     end Communication_Init;
 
-    procedure Set_Host_Baud (Port : access Ada.Streams.Root_Stream_Type'Class;
+    procedure Clear_Comm_Buffer (Port : in out Comm_Port)
+    is
+    begin
+        Communications_Close (Port => Port);
+        Port := Communication_Init (BC      => Configd_Baud,
+                                    COM_Num => Configd_COM_Num);
+    end Clear_Comm_Buffer;
+
+    procedure Set_Host_Baud (Port : Comm_Port;
                              BC   : Integer)
     is
     begin
         null;
     end Set_Host_Baud;
 
-    procedure Communications_Close (Port : access Ada.Streams.Root_Stream_Type'Class)
+    procedure Communications_Close (Port : Comm_Port)
     is
         SPort : access Serial_Port := Serial_Port(Port.all)'Access;
     begin

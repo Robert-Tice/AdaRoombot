@@ -45,22 +45,30 @@ package Communication is
        B57600,
        B115200);
 
+    type Comm_Port is access all Ada.Streams.Root_Stream_Type'Class;
+
     Default_Baud    : constant Baud_Code := B115200;
     Default_COM_Num : constant Natural := 15;
     Is_Init         : Boolean := False;
+
+    Configd_Baud    : Baud_Code;
+    Configd_COM_Num : Natural;
 
     Comm_Uninit_Exception : exception;
 
     function Communication_Init (BC      : Baud_Code := Default_Baud;
                                  COM_Num : Natural := Default_COM_Num)
-                                 return access Ada.Streams.Root_Stream_Type'Class
+                                 return Comm_Port
       with Post => Is_Init or else raise Comm_Uninit_Exception;
 
-    procedure Set_Host_Baud (Port : access Ada.Streams.Root_Stream_Type'Class;
+    procedure Clear_Comm_Buffer (Port : in out Comm_Port)
+      with Pre => Is_Init or else raise Comm_Uninit_Exception;
+
+    procedure Set_Host_Baud (Port : Comm_Port;
                              BC   : Integer)
       with Pre => Is_Init or else raise Comm_Uninit_Exception;
 
-    procedure Communications_Close (Port : access Ada.Streams.Root_Stream_Type'Class)
+    procedure Communications_Close (Port : Comm_Port)
       with Post => not Is_Init or else raise Comm_Uninit_Exception;
 
 
