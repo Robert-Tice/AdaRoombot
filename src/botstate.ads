@@ -35,20 +35,19 @@ with Types; use Types;
 package Botstate is
 
     protected Bot_Interface is
-        procedure Initd;
-        entry Wait_For_Init;
         procedure Set (Raw_Array : in Stream_Element_Array);
         entry Get (Collection : out Sensor_Collection);
     private
         Sensors  : Sensor_Collection;
         Sem      : Boolean := False;
-        Init     : Boolean := False;
     end Bot_Interface;
 
     Port : Comm_Port := Communication_Init;
 
     task Feedback;
     task Control;
+
+    procedure Init_Bot;
 
 
 end Botstate;

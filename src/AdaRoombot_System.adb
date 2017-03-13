@@ -27,26 +27,12 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
-with Botstate; use Botstate;
-with Commands; use Commands;
-with Communication; use Communication;
-
 with System;
 
 procedure AdaRoombot_System is
     pragma Priority (System.Priority'First);
 begin
-    Send_Command (Port => Port,
-                  Rec  => Comm_Rec'(Op => Start));
-    Clear_Comm_Buffer (Port => Port);
-    Send_Command (Port => Port,
-                  Rec  => Comm_Rec'(Op => Mode_Safe));
-    Send_Command (Port => Port,
-                  Rec  => Comm_Rec'(Op   => Digital_LEDs_ASCII,
-                                    Text => "HI!!"));
-    Bot_Interface.Initd;
     loop
         null;
     end loop;
 end AdaRoombot_System;
-

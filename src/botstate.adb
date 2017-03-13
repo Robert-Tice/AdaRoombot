@@ -32,6 +32,7 @@ with Ada.Real_Time; use Ada.Real_Time;
 with Algorithm; use Algorithm;
 with Commands; use Commands;
 with System; use System;
+with Communication; use Communication;
 
 package body Botstate is
 
@@ -53,18 +54,6 @@ package body Botstate is
             Sem := False;
         end Get;
 
-        procedure Initd
-        is
-        begin
-            Init := True;
-        end Initd;
-
-        entry Wait_For_Init
-          when Init
-        is begin
-            null;
-        end Wait_For_Init;
-
     end Bot_Interface;
 
     task body Feedback
@@ -76,11 +65,11 @@ package body Botstate is
         Period    : constant Time_Span := Milliseconds (20);
 
     begin
-        Bot_Interface.Wait_For_Init;
+        Init_Bot;
         loop
             Send_Command (Port   => Port,
                           Rec    => Comm_Rec'(Op                 => Sensors_List,
-                                              Num_Query_Packets => 1),
+                                              Num_Query_Packets  => 1),
                           Data   => (0 => 100));
             Read (Stream => Port.all,
                   Item   => Raw_RX,
@@ -96,7 +85,6 @@ package body Botstate is
         Algo : Pong_Algorithm;
     begin
         Algo.Port := Port;
-        Bot_Interface.Wait_For_Init;
         loop
             Bot_Interface.Get (Collection => Algo.Sensors);
             Algo.Safety_Check;
@@ -108,6 +96,16 @@ package body Botstate is
         when others =>
             null;
     end Control;
+
+    procedure Bot_Init
+    is
+    begin
+        Send_Command (Port => Port,
+                      Rec  => Comm_Rec'(Op => Start));
+        Clear_Comm_Buffer (Port => Port);
+        Send_Command (Port => Port,
+                      Rec  => Comm_Rec'(Op => Mode_Safe));
+    end Bot_Init;
 
 
 end Botstate;

@@ -27,95 +27,72 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
-with Communication; use Communication;
-
-with STM32; use STM32;
 with STM32.Device; use STM32.Device;
-with STM32.GPIO; use STM32.GPIO;
-with STM32.USARTs; use STM32.USARTs;
+with HAL; use HAL;
+
+with Peripherals_Streaming; use Peripherals_Streaming;
+with Serial_IO.Streaming; use Serial_IO.Streaming;
 
 package body Communication is
 
-   with Last_Chance_Handler; pragma Unreferenced (Last_Chance_Handler);
+    with Last_Chance_Handler; pragma Unreferenced (Last_Chance_Handler);
 
-   Parity : constant Parity := No_Parity;
-   Data_Bits : constant Word_Lengths := Word_Length_8;
-   End_Bits : constant Stop_Bits := Stopbits_1;
-   Control : constant Flow_Control := No_Flow_Control;
-
-   procedure Await_Send_Ready is
-   begin
-      loop
-         exit when Tx_Ready(USART);
-      end loop;
-   end Await_Send_Ready;
-
-   procedure Await_Data_Available is
-   begin
-      loop
-         exit when Rx_Ready(USART);
-      end loop;
-   end Await_Data_Available;
+    Parity    : constant Parity := No_Parity;
+    Data_Bits : constant Word_Lengths := Word_Length_8;
+    End_Bits  : constant Stop_Bits := Stopbits_1;
+    Control   : constant Flow_Control := No_Flow_Control;
 
 
-   procedure Communication_Init (BC : Integer := Default_Baud) is
-      Config : GPIO_Port_Configuration;
-      Device_Pins : constant GPIO_Points := GPIO_Point & GPIO_Point;
-   begin
-      -- Configure Pin muxing
-      Enable_Clock(Device_Pins);
-      Enable_Clock(USART.all);
+    function Communication_Init (BC : Baud_Code := Default_Baud;
+                                 COM_Num : Natural := Default_COM_Num)
+                                 return Comm_Port
+    is
+        Rate  : Baud_Rates;
+    begin
+        Initialize (COM);
+        case BC is
+            when B300 =>
+                Rate := 300;
+            when B600 =>
+                Rate := 600;
+            when B1200 =>
+                Rate := 1200;
+            when B2400 =>
+                Rate := 2400;
+            when B4800 =>
+                Rate := 4800;
+            when B9600 =>
+                Rate := 9600;
+            when B19200 =>
+                Rate := 19_200;
+            when B38400 =>
+                Rate := 38_400;
+            when B57600 =>
+                Rate := 57_600;
+            when others =>
+                Rate := 115_200;
+        end case;
+        Configure (COM, Rate);
+        Is_Init := True;
+        return COM'Access;
+    end Communication_Init;
 
-      Config.Mode := Mode_AF;
-      Config.Speed := Speed_50MHz;
-      Config.Output_Type := Push_Pull;
-      Config.Resistors := Pull_Up;
+    procedure Clear_Comm_Buffer (Port : in out Comm_Port)
+    is
+    begin
+        null;
+    end Clear_Comm_Buffer;
 
-      Configure_IO(Device_Pins, Config);
-      Configure_Alternate_Function(Device_Pins, GPIO_Alternate_Function);
+    procedure Set_Host_Baud (Port : in out Comm_Port)
+    is
+    begin
+        null;
+    end Set_Host_Baud;
 
-      -- Setup peripheral
-      Disable(USART);
-
-      Set_Baud_Rate(USART, Baud_Rates(BC));
-      Set_Mode(USART, Tx_Rx_Mode);
-      Set_Stop_Bits(USART, End_Bits);
-      Set_Word_Length(USART, Data_Bits);
-      Set_Parity(USART, Parity);
-      Set_Flow_Control(USART, Control);
-
-      Enable(USART);
-
-      Is_Init := True;
-   end Communication_Init;
-
-   procedure Serial_TX (Payload : Serial_Payload) is
-   begin
-      for I in 1 .. Payload'Length loop
-	 Await_Send_Ready;
-	 Transmit(USART, Payload(I));
-      end loop;
-   end Serial_TX;
-
-   function Serial_RX (Msg_Size : Integer) return Serial_Payload is
-      Ret : Serial_Payload(1 .. Msg_Size);
-   begin
-      for I in 1 .. Msg_Size loop
-	 Await_Data_Available;
-	 Receive(USART, Ret(I));
-      end loop;
-   end Serial_RX;
-
-   procedure Set_Host_Baud (BC : Integer) is
-   begin
-      Disable(USART);
-      Set_Baud_Rate(USART, Baud_Rates(BC));
-      Enable(USART);
-   end Set_Host_Baud;
-
-   procedure Communications_Close is
-   begin
-      Is_Init := False;
-   end Communications_Close;
+    procedure Communications_Close (Port : Comm_Port)
+    is
+    begin
+        Is_Init := False;
+    end Communications_Close;
 
 end Communication;
