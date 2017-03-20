@@ -54,72 +54,52 @@ package Types is
     type Velocity is record
         Data : Velocity_Type := 0;
     end record
-      with Size => 16,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 16;
 
     type Radius is record
         Data : Radius_Type := 0;
     end record
-      with Size => 16,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 16;
 
     type Distance is record
         Data : Distance_Type := 0;
     end record
-      with Size => 16,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 16;
 
     type Voltage is record
         Data : Voltage_Type := 0;
     end record
-      with Size => 16,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 16;
 
     type Current is record
         Data : Current_Type := 0;
     end record
-      with Size => 16,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 16;
 
     type Charge is record
         Data : Charge_Type := 0;
     end record
-      with Size => 16,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 16;
 
     type Sensor_Wall_Signal is record
         Data : Sensor_Wall_Signal_Type := 0;
     end record
-      with Size => 16,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 16;
 
     type Sensor_Cliff_Signal is record
         Data : Sensor_Cliff_Signal_Type := 0;
     end record
-      with Size => 16,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 16;
 
     type Encoder_Counts is record
         Data : Encoder_Counts_Type := 0;
     end record
-      with Size => 16,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 16;
 
     type Light_Bump_Signal is record
         Data : Light_Bump_Signal_Type := 0;
     end record
-      with Size => 16,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 16;
 
     type Sensor_Bumps_And_Wheel_Drops is record
         Bump_Right           : Boolean;
