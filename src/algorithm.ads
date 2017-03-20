@@ -10,8 +10,10 @@ package Algorithm is
     
     Default_Velocity : Velocity := 320;
     
+    Sensors_Private : aliased Sensor_Collection;
+    
     type Abstract_Algorithm is abstract tagged record
-        Sensors : Sensor_Collection;
+        Sensors : access Sensor_Collection;
     end record;
     
     procedure Process (Self : in out Abstract_Algorithm) is abstract;

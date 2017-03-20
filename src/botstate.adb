@@ -85,7 +85,7 @@ package body Botstate is
     begin
         Algo.Port := Port;
         loop
-            Bot_Interface.Get (Collection => Algo.Sensors);
+            Bot_Interface.Get (Collection => Algo.Sensors.all);
             Algo.Safety_Check;
             Algo.Process;
         end loop;
