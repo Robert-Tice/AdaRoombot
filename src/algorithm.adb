@@ -18,7 +18,7 @@ package body Algorithm is
             when Collision =>
                 Send_Command (Port   => Self.Port,
                               Rec    => Construct_Drive_Special (Special => Straight,
-                                                                 V       => Velocity'(Data => 0)));
+                                                                 V       => 0));
                 Self.State := Recover;
             when Recover =>
                 case Self.Last_Turn is
@@ -26,21 +26,21 @@ package body Algorithm is
                         Send_Command (Port   => Self.Port,
                                       Rec    => Construct_Drive_Special 
                                         (Special => CW,
-                                         V       => Velocity'(Data => 250)));
+                                         V       => 250));
                     when True =>
                         Send_Command (Port   => Self.Port,
                                       Rec    => Construct_Drive_Special 
                                         (Special => CCW,
-                                         V       => Velocity'(Data => 250)));
+                                         V       => 250));
                 end case;
                 Self.Last_Turn := not Self.Last_Turn;
                         
                 Self.State := Passive_Recover;
-                Self.Reported_Angle.Data := 0;
+                Self.Reported_Angle := 0;
             when Passive_Recover =>
-                Self.Reported_Angle.Data := Self.Reported_Angle.Data + 
-                  abs Self.Sensors.Ang.Data;
-                if Self.Reported_Angle.Data >= 180 then
+                Self.Reported_Angle := Self.Reported_Angle + 
+                  abs Self.Sensors.Ang;
+                if Self.Reported_Angle >= 180 then
                   Self.State := Drive;
                 end if;                       
         end case;

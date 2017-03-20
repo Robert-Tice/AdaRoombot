@@ -81,11 +81,11 @@ package body Commands is
     begin
         case Special is
         when Straight =>
-            SData.Rad.Data := 32767;
+            SData.Rad := 32767;
         when CW =>
-            SData.Rad.Data := -1;
+            SData.Rad := -1;
         when CCW =>
-            SData.Rad.Data := 1;
+            SData.Rad := 1;
         end case;
         SData.Vel := V;
         return SData;

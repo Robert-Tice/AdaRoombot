@@ -8,7 +8,7 @@ package Algorithm is
     
     Safety_Exception : exception;
     
-    Default_Velocity : Velocity := (Data => 320);
+    Default_Velocity : Velocity := 320;
     
     type Abstract_Algorithm is abstract tagged record
         Sensors : Sensor_Collection;

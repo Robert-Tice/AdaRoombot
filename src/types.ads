@@ -14,92 +14,43 @@ package Types is
     type Hour is new Integer range 0 .. 23;
     type Minute is new Integer range 0 .. 59;
 
-    type Velocity_Type is new Integer range -500 .. 500
+    type Velocity is new Integer range -500 .. 500
       with Size => 16;
 
-    type Radius_Type is new Integer range -32768 .. 32767
-      with Static_Predicate => Radius_Type in -2000 .. 2000 | -32768 | 32767,
+    type Radius is new Integer range -32768 .. 32767
+      with Static_Predicate => Radius in -2000 .. 2000 | -32768 | 32767,
       Size => 16;
 
-    type Distance_Type is new Integer range -32768 .. 32767
+    type Distance is new Integer range -32768 .. 32767
       with Size => 16;
 
-    type Voltage_Type is new Natural range 0 .. 65535
+    type Voltage is new Natural range 0 .. 65535
       with Size => 16;
 
-    type Current_Type is new Integer range -32768 .. 32767
+    type Current is new Integer range -32768 .. 32767
       with Size => 16;
 
     type Temperature is new Integer range -128 .. 127
       with Size => 8;
 
-    type Charge_Type is new Natural range 0 .. 65535
+    type Charge is new Natural range 0 .. 65535
       with Size => 16;
 
-    type Sensor_Wall_Signal_Type is new Natural range 0 .. 1023
+    type Sensor_Wall_Signal is new Natural range 0 .. 1023
       with Size => 16;
 
-    type Sensor_Cliff_Signal_Type is new Natural range 0 .. 4095
+    type Sensor_Cliff_Signal is new Natural range 0 .. 4095
       with Size => 16;
 
     type Sensor_Song_Number is new Natural range 0 .. 15
       with Size => 8;
 
-    type Encoder_Counts_Type is new Integer range -32768 .. 32767
+    type Encoder_Counts is new Integer range -32768 .. 32767
       with Size => 16;
 
-    type Light_Bump_Signal_Type is new Natural range 0 .. 4095
+    type Light_Bump_Signal is new Natural range 0 .. 4095
       with Size => 16;
 
-    type Velocity is record
-        Data : Velocity_Type := 0;
-    end record
-      with Size => 16;
-
-    type Radius is record
-        Data : Radius_Type := 0;
-    end record
-      with Size => 16;
-
-    type Distance is record
-        Data : Distance_Type := 0;
-    end record
-      with Size => 16;
-
-    type Voltage is record
-        Data : Voltage_Type := 0;
-    end record
-      with Size => 16;
-
-    type Current is record
-        Data : Current_Type := 0;
-    end record
-      with Size => 16;
-
-    type Charge is record
-        Data : Charge_Type := 0;
-    end record
-      with Size => 16;
-
-    type Sensor_Wall_Signal is record
-        Data : Sensor_Wall_Signal_Type := 0;
-    end record
-      with Size => 16;
-
-    type Sensor_Cliff_Signal is record
-        Data : Sensor_Cliff_Signal_Type := 0;
-    end record
-      with Size => 16;
-
-    type Encoder_Counts is record
-        Data : Encoder_Counts_Type := 0;
-    end record
-      with Size => 16;
-
-    type Light_Bump_Signal is record
-        Data : Light_Bump_Signal_Type := 0;
-    end record
-      with Size => 16;
 
     type Sensor_Bumps_And_Wheel_Drops is record
         Bump_Right           : Boolean;
