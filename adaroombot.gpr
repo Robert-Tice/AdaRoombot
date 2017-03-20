@@ -1,8 +1,8 @@
-project AdaRoombot_Win32 is
+project AdaRoombot is
 
    for Languages use ("Ada");
-   for Object_Dir use "obj/win32";
-   for Source_Dirs use ("src", "win32-src");
+   for Object_Dir use "obj";
+   for Source_Dirs use ("src");
    for Main use ("AdaRoombot_System.adb");
 
    package Builder is
@@ -16,5 +16,5 @@ project AdaRoombot_Win32 is
    package Linker is
    end Linker;
 
-end AdaRoombot_Win32;
+end AdaRoombot;
 
