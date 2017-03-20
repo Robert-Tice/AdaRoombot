@@ -5,7 +5,8 @@ package Types is
     type UByte is new Natural range 0 .. 255
       with Size => 8;
 
-    type UByte_Array is array (Integer range <>) of UByte;
+    type UByte_Array is array (Integer range <>) of UByte
+      with Scalar_Storage_Order => High_Order_First;
 
     type Day is
       (Sunday, Monday, Tuesday, Wednesday,
