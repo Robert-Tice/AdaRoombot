@@ -51,9 +51,6 @@ package Types is
     type Light_Bump_Signal_Type is new Natural range 0 .. 4095
       with Size => 16;
 
-    subtype Unpacked_Boolean is Boolean
-      with Value_Size => 8;
-
     type Velocity is record
         Data : Velocity_Type := 0;
     end record
@@ -233,12 +230,12 @@ package Types is
 
     type Sensor_Collection is record
         Bumps_And_Wheel_Drops          : Sensor_Bumps_And_Wheel_Drops;
-        Wall                           : Unpacked_Boolean;
-        Cliff_Left                     : Unpacked_Boolean;
-        Cliff_Front_Left               : Unpacked_Boolean;
-        Cliff_Front_Right              : Unpacked_Boolean;
-        Cliff_Right                    : Unpacked_Boolean;
-        Virtual_Wall                   : Unpacked_Boolean;
+        Wall                           : Boolean;
+        Cliff_Left                     : Boolean;
+        Cliff_Front_Left               : Boolean;
+        Cliff_Front_Right              : Boolean;
+        Cliff_Right                    : Boolean;
+        Virtual_Wall                   : Boolean;
         Wheel_Overcurrents             : Sensor_Wheel_Overcurrents;
         Dirt_Detect                    : UByte;
         Unused1                        : UByte;
@@ -261,7 +258,7 @@ package Types is
         Charging_Sources_Available     : Sensor_Charging_Sources_Available;
         OI_Mode                        : Sensor_OI_Mode;
         Song_Number                    : Sensor_Song_Number;
-        Song_Playing                   : Unpacked_Boolean;
+        Song_Playing                   : Boolean;
         Number_Of_Stream_Packets       : UByte;
         Requested_Velocity             : Velocity;
         Requested_Radius               : Radius;
@@ -284,8 +281,64 @@ package Types is
         Side_Brush_Motor_Current       : Current;
         Stasis                         : Sensor_Stasis;
     end record
-      with Alignment => 1;
+      with Alignment => 1,
+      Scalar_Storage_Order => High_Order_First,
+      Bit_Order => High_Order_First;
 
+
+    for Sensor_Collection use record
+        Bumps_And_Wheel_Drops at 0 range 0 .. 7;
+        Wall at 1 range 0 .. 7;
+        Cliff_Left at 2 range 0 .. 7;
+        Cliff_Front_Left at 3 range 0 .. 7;
+        Cliff_Front_Right at 4 range 0 .. 7;
+        Cliff_Right at 5 range 0 .. 7;
+        Virtual_Wall at 6 range 0 .. 7;
+        Wheel_Overcurrents at 7 range 0 .. 7;
+        Dirt_Detect at 8 range 0 .. 7;
+        Unused1 at 9 range 0 .. 7;
+        IR_Char_Omni at 10 range 0 .. 7;
+        Buttons at 11 range 0 .. 7;
+        Dis at 12 range 0 .. 15;
+        Ang at 14 range 0 .. 15;
+        Charging_State at 16 range 0 .. 7;
+        Volt at 17 range 0 .. 15;
+        Cur at 19 range 0 .. 15;
+        Temp at 21 range 0 .. 7;
+        Batt_Charge at 22 range 0 .. 15;
+        Batt_Cap at 24 range 0 .. 15;
+        Wall_Sig at 26 range 0 .. 15;
+        Cliff_Left_Sig at 28 range 0 .. 15;
+        Cliff_Front_Left_Sig at 30 range 0 .. 15;
+        Cliff_Front_Right_Sig at 32 range 0 .. 15;
+        Cliff_Right_Sig at 34 range 0 .. 15;
+        Unused2 at 36 range 0 .. 23;
+        Charging_Sources_Available at 39 range 0 .. 7;
+        OI_Mode at 40 range 0 .. 7;
+        Song_Number at 41 range 0 .. 7;
+        Song_Playing at 42 range 0 .. 7;
+        Number_Of_Stream_Packets at 43 range 0 .. 7;
+        Requested_Velocity at 44 range 0 .. 15;
+        Requested_Radius at 46 range 0 .. 15;
+        Requested_Right_Velocity at 48 range 0 .. 15;
+        Requested_Left_Velocity at 50 range 0 .. 15;
+        Left_Encoder_Counts at 52 range 0 .. 15;
+        Right_Encoder_Counts at 54 range 0 .. 15;
+        Light_Bumper at 56 range 0 .. 7;
+        Light_Bump_Left_Signal at 57 range 0 .. 15;
+        Light_Bump_Front_Left_Signal at 59 range 0 .. 15;
+        Light_Bump_Center_Left_Signal at 61 range 0 .. 15;
+        Light_Bump_Center_Right_Signal at 63 range 0 .. 15;
+        Light_Bump_Front_Right_Signal at 65 range 0 .. 15;
+        Light_Bump_Right_Signal at 67 range 0 .. 15;
+        IR_Character_Left at 69 range 0 .. 7;
+        IR_Character_Right at 70 range 0 .. 7;
+        Left_Motor_Current at 71 range 0 .. 15;
+        Right_Motor_Current at 73 range 0 .. 15;
+        Main_Motor_Current at 75 range 0 .. 15;
+        Side_Brush_Motor_Current at 77 range 0 .. 15;
+        Stasis at 79 range 0 .. 7;
+    end record;
 
 
 
