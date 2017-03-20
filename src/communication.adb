@@ -41,15 +41,15 @@ package body Communication is
     Control  : constant Flow_Control := None;
     G_Port   : aliased Serial_Port;
 
-    function Communication_Init (BC      : Baud_Code := Default_Baud;
-                                 COM_Num : Natural := Default_COM_Num)
+    function Communication_Init (BC       : Baud_Code := Default_Baud;
+                                 COM_Name : String := Default_COM_Name)
                                  return Comm_Port
     is
-        PName : constant Port_Name := Name (Number => COM_Num);
+        PName : constant Port_Name := Port_Name(COM_Name);
         Rate  : Data_Rate;
     begin
         Configd_Baud := BC;
-        Configd_COM_Num := COM_Num;
+        Configd_COM_Name := COM_Name;
         Open (Port => G_Port,
               Name => PName);
         case BC is
@@ -92,7 +92,7 @@ package body Communication is
     begin
         Communications_Close (Port => Port);
         Port := Communication_Init (BC      => Configd_Baud,
-                                    COM_Num => Configd_COM_Num);
+                                    COM_Name => Configd_COM_Name);
     end Clear_Comm_Buffer;
 
     procedure Set_Host_Baud (Port : Comm_Port;

@@ -42,10 +42,8 @@ package Botstate is
         Sem      : Boolean := False;
     end Bot_Interface;
 
-    Port : Comm_Port := Communication_Init;
-
-    task Feedback;
-    task Control;
+    task type Feedback;
+    task type Control;
 
     procedure Init_Bot;
 

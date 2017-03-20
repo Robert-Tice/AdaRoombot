@@ -46,18 +46,21 @@ package Communication is
        B115200);
 
     type Comm_Port is access all Ada.Streams.Root_Stream_Type'Class;
+    Port : Comm_Port;
 
-    Default_Baud    : constant Baud_Code := B115200;
-    Default_COM_Num : constant Natural := 15;
-    Is_Init         : Boolean := False;
+
+    Default_Baud     : constant Baud_Code := B115200;
+    Default_COM_Name : constant String := "ttyUSB0";
+    Is_Init          : Boolean := False;
 
     Configd_Baud    : Baud_Code;
-    Configd_COM_Num : Natural;
+    Configd_COM_Name : String := Default_COM_Name;
 
     Comm_Uninit_Exception : exception;
 
-    function Communication_Init (BC      : Baud_Code := Default_Baud;
-                                 COM_Num : Natural := Default_COM_Num)
+
+    function Communication_Init (BC       : Baud_Code := Default_Baud;
+                                 COM_Name : String := Default_COM_Name)
                                  return Comm_Port
       with Post => Is_Init or else raise Comm_Uninit_Exception;
 

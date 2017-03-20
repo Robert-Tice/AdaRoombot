@@ -65,7 +65,6 @@ package body Botstate is
         Period    : constant Time_Span := Milliseconds (20);
 
     begin
-        Init_Bot;
         loop
             Send_Command (Port   => Port,
                           Rec    => Comm_Rec'(Op                 => Sensors_List,
@@ -97,7 +96,7 @@ package body Botstate is
             null;
     end Control;
 
-    procedure Bot_Init
+    procedure Init_Bot
     is
     begin
         Send_Command (Port => Port,
@@ -105,7 +104,7 @@ package body Botstate is
         Clear_Comm_Buffer (Port => Port);
         Send_Command (Port => Port,
                       Rec  => Comm_Rec'(Op => Mode_Safe));
-    end Bot_Init;
+    end Init_Bot;
 
 
 end Botstate;

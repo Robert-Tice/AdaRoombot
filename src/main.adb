@@ -27,12 +27,33 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
-with System;
+with Botstate; use Botstate;
+with Communication; use Communication;
 
-procedure AdaRoombot_System is
-    pragma Priority (System.Priority'First);
-begin
-    loop
+with Ada.Command_Line; use Ada.Command_Line;
+with Ada.Text_IO; use Ada.Text_IO;
+
+procedure Main is
+    procedure Control_Process
+    is
+        RX : Feedback;
+        TX : Control;
+    begin
         null;
-    end loop;
-end AdaRoombot_System;
+    end Control_Process;
+
+begin
+    if Argument_Count = 1 then
+        Port := Communication_Init (BC       => Default_Baud,
+                                    COM_Name => Argument (1));
+    else
+        Port := Communication_Init;
+    end if;
+
+    Init_Bot;
+
+    Control_Process;
+
+    Communications_Close(Port);
+
+end Main;
