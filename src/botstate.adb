@@ -40,7 +40,7 @@ package body Botstate is
         procedure Set (Raw_Array : in Stream_Element_Array)
         is
             Elem_Array : Stream_Element_Array (1 .. Raw_Array'Length)
-              with Address => Sensors'Address;
+              with Address => Sensors.all'Address;
         begin
             Elem_Array := Raw_Array;
             Sem := True;
@@ -50,7 +50,7 @@ package body Botstate is
           when Sem
         is
         begin
-            Collection := Sensors;
+            Collection := Sensors.all;
             Sem := False;
         end Get;
 

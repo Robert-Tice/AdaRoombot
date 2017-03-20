@@ -34,11 +34,13 @@ with Types; use Types;
 
 package Botstate is
 
+    Sensors_Private : aliased Sensor_Collection;
+
     protected Bot_Interface is
         procedure Set (Raw_Array : in Stream_Element_Array);
         entry Get (Collection : out Sensor_Collection);
     private
-        Sensors  : Sensor_Collection;
+        Sensors  : access Sensor_Collection := Sensors_Private'Access;
         Sem      : Boolean := False;
     end Bot_Interface;
 
