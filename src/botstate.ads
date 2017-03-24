@@ -27,17 +27,18 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
-with Ada.Streams; use Ada.Streams;
-
-with Communication; use Communication;
+with Algorithm; use Algorithm;
 with Types; use Types;
 
 package Botstate is
 
+    type Algorithm_Type is
+      (Pong);
+
     Sensors_Private : aliased Sensor_Collection;
 
     protected Bot_Interface is
-        procedure Set (Raw_Array : in Stream_Element_Array);
+        procedure Set (Raw_Array : in UByte_Array);
         entry Get (Collection : out Sensor_Collection);
     private
         Sensors  : access Sensor_Collection := Sensors_Private'Access;
@@ -47,7 +48,13 @@ package Botstate is
     task type Feedback;
     task type Control;
 
-    procedure Init_Bot;
+    procedure Init_Bot (TTY_Name  : String;
+                        Algo_Type : Algorithm_Type);
 
+    procedure Kill_Bot;
+
+private
+    type Algorithm_Ptr is access Abstract_Algorithm'Class;
+    Algo : Algorithm_Ptr;
 
 end Botstate;

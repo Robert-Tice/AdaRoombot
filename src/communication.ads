@@ -27,9 +27,16 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
-with Ada.Streams;
+with Types; use Types;
+
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Interfaces.C; use Interfaces.C;
 
 package Communication is
+
+    package C renames Interfaces.C;
+
+    use type C.Int;
 
     type Baud_Code is
       (B300,
@@ -45,34 +52,91 @@ package Communication is
        B57600,
        B115200);
 
-    type Comm_Port is access all Ada.Streams.Root_Stream_Type'Class;
-    Port : Comm_Port;
+    type Poll_Type is record
+        Read       : Boolean := False;
+        Write      : Boolean := False;
+        Exceptions : Boolean := False;
+    end record;
+
+    type Serial_Port_Inst is tagged record
+        Fd    : File_Descriptor := 0;
+        Flags : C.Int := O_RDWR + O_NOCTTY;
+    end record;
+
+    function Open (Self : Serial_Port_Inst;
+                   Name : String)
+                   return Boolean;
+
+    procedure Close (Self : Serial_Port_Inst);
+
+    function Read (Self   : Serial_Port_Inst;
+                   Buffer : out UByte_Array)
+                   return Integer;
+
+    function Write (Self   : Serial_Port_Inst;
+                    Buffer : in UByte_Array)
+                    return Integer;
+
+    function Poll (Self : Serial_Port_Inst;
+                   Seconds: Natural := 0)
+                   return Boolean;
+
+    type Serial_Port is access Serial_Port_Inst;
 
 
-    Default_Baud     : constant Baud_Code := B115200;
-    Default_COM_Name : constant String := "ttyUSB0";
-    Is_Init          : Boolean := False;
+    function Communication_Init (Data_Rate : Baud_Code;
+                                 Name      : String)
+                                 return Serial_Port
+      with Post => Communication_Init'Result /= null;
 
-    Configd_Baud    : Baud_Code;
-    Configd_COM_Name : String := Default_COM_Name;
+    procedure Clear_Comm_Buffer (Port : Serial_Port)
+      with Pre => Port /= null;
 
-    Comm_Uninit_Exception : exception;
+    procedure Communications_Close (Port : in out Serial_Port)
+      with Pre => Port /= null,
+      Post => Port = null;
 
+private
+    procedure Raise_Error (Message : String;
+                           Error   : Integer := Errno);
 
-    function Communication_Init (BC       : Baud_Code := Default_Baud;
-                                 COM_Name : String := Default_COM_Name)
-                                 return Comm_Port
-      with Post => Is_Init or else raise Comm_Uninit_Exception;
+    type Fd_Arr is mod 2 ** 32;
+    pragma Convention (C, Fd_Arr);
 
-    procedure Clear_Comm_Buffer (Port : in out Comm_Port)
-      with Pre => Is_Init or else raise Comm_Uninit_Exception;
+    type Fd_Arr_Ptr is access all Fd_Arr;
+    pragma Convention (C, Fd_Arr_Ptr);
 
-    procedure Set_Host_Baud (Port : Comm_Port;
-                             BC   : Integer)
-      with Pre => Is_Init or else raise Comm_Uninit_Exception;
+    type Timeval is record
+        Tv_Sec  : C.Int;
+        Tv_Usec : C.Int;
+    end record;
+    pragma Convention (C, Timeval);
 
-    procedure Communications_Close (Port : Comm_Port)
-      with Post => not Is_Init or else raise Comm_Uninit_Exception;
+    type Timeval_Ptr is access all Timeval;
+    pragma Convention (C, Timeval_Ptr);
 
+    function C_Select (Nfds      : C.Int;
+                       Readfs    : Fd_Arr_Ptr;
+                       Writefds  : Fd_Arr_Ptr;
+                       Exceptfds : Fd_Arr_Ptr;
+                       Timeout   : Timeval_Ptr)
+                       return C.Int;
+    pragma Import (C, C_Select, "select");
+
+    procedure FD_CLR (Fd  : C.Int;
+                      Set : Fd_Arr_Ptr);
+    pragma Import (C, FD_CLR, "FD_CLR");
+
+    function FD_ISSET (Fd  : C.Int;
+                       Set : Fd_Arr_Ptr)
+                       return C.Int;
+    pragma Import (C, FD_ISSET, "FD_ISSET");
+
+    procedure FD_SET (Fd  : C.Int;
+                      Set : Fd_Arr_Ptr);
+    pragma Import (C, FD_SET, "FD_SET");
+
+    procedure FD_ZERO (Set : Fd_Arr_Ptr);
+    pragma Import (C, FD_ZERO, "FD_ZERO");
 
 end Communication;

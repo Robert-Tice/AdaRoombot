@@ -28,8 +28,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Real_Time; use Ada.Real_Time;
+with Ada.Unchecked_Deallocation; use Ada.Unchecked_Deallocation;
 
-with Algorithm; use Algorithm;
 with Commands; use Commands;
 with System; use System;
 with Communication; use Communication;
@@ -37,9 +37,9 @@ with Communication; use Communication;
 package body Botstate is
 
     protected body Bot_interface is
-        procedure Set (Raw_Array : in Stream_Element_Array)
+        procedure Set (Raw_Array : in UByte_Array)
         is
-            Elem_Array : Stream_Element_Array (1 .. Raw_Array'Length)
+            Elem_Array : UByte_Array (1 .. Raw_Array'Length)
               with Address => Sensors.all'Address;
         begin
             Elem_Array := Raw_Array;
@@ -58,22 +58,22 @@ package body Botstate is
 
     task body Feedback
     is
-        Raw_RX  : Stream_Element_Array (1 .. 80);
-        Last    : Stream_Element_Offset := 0;
-
+        Raw_RX    : UByte_Array (1 .. 100);
         Next_Read : Time := Clock;
         Period    : constant Time_Span := Milliseconds (20);
 
     begin
         loop
-            Send_Command (Port   => Port,
+            Send_Command (Port   => Algo.Port,
                           Rec    => Comm_Rec'(Op                 => Sensors_List,
                                               Num_Query_Packets  => 1),
                           Data   => (0 => 100));
-            Read (Stream => Port.all,
-                  Item   => Raw_RX,
-                  Last   => Last);
-            Bot_Interface.Set (Raw_Array => Raw_RX);
+
+            if Algo.Port.Poll then
+                Algo.Port.Read (Buffer => Raw_RX);
+                Bot_Interface.Set (Raw_Array => Raw_RX);
+            end if;
+
             Next_Read := Next_Read + Period;
             delay until Next_Read;
         end loop;
@@ -81,9 +81,7 @@ package body Botstate is
 
     task body Control
     is
-        Algo : Pong_Algorithm;
     begin
-        Algo.Port := Port;
         loop
             Bot_Interface.Get (Collection => Algo.Sensors.all);
             Algo.Safety_Check;
@@ -96,15 +94,27 @@ package body Botstate is
             null;
     end Control;
 
-    procedure Init_Bot
+    procedure Init_Bot (TTY_Name  : String;
+                        Algo_Type : Algorithm_Type)
     is
     begin
-        Send_Command (Port => Port,
-                      Rec  => Comm_Rec'(Op => Start));
-        Clear_Comm_Buffer (Port => Port);
-        Send_Command (Port => Port,
-                      Rec  => Comm_Rec'(Op => Mode_Safe));
+        case Algo is
+            when Pong =>
+                Algo := new Pong_Algorithm;
+                Algo.Init (TTY_Name => TTY_Name);
+        end case;
+
     end Init_Bot;
+
+    procedure Free_Algo is new Ada.Unchecked_Deallocation
+      (Object => Abstract_Algorithm'Class, Name => Algorithm_Ptr);
+
+    procedure Kill_Bot
+    is
+    begin
+        Algo.Kill;
+        Free_Algo (Algo);
+    end Kill_Bot;
 
 
 end Botstate;

@@ -14,8 +14,12 @@ package Algorithm is
     
     type Abstract_Algorithm is abstract tagged record
         Sensors : access Sensor_Collection;
+        Port    : Serial_Port;
     end record;
     
+    procedure Init (Self     : in out Abstract_Algorithm;
+                    TTY_Name : String);
+    procedure Kill (Self : in out Abstract_Algorithm);
     procedure Process (Self : in out Abstract_Algorithm) is abstract;
     procedure Safety_Check (Self : in Abstract_Algorithm) is abstract;
     
@@ -29,7 +33,6 @@ package Algorithm is
     type Pong_Algorithm is new Abstract_Algorithm with record
         State          : Algorithm_State := Drive;
         Collision      : Boolean := False;
-        Port           : Comm_Port;
         Reported_Angle : Radius;
         Last_Turn      : Boolean := False;
     end record;

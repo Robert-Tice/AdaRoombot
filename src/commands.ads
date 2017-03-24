@@ -30,9 +30,6 @@
 with Communication; use Communication;
 with Types; use Types;
 
-with Ada.Streams;
-with System; use System;
-
 package Commands is
 
     type Drive_Special is
@@ -458,9 +455,9 @@ package Commands is
                                       V       : Velocity)
                                       return Comm_Rec;
 
-    procedure Send_Command (Port : Comm_Port;
+    procedure Send_Command (Port : Serial_Port;
                             Rec  : Comm_Rec);
-    procedure Send_Command (Port : Comm_Port;
+    procedure Send_Command (Port : Serial_Port;
                             Rec  : Comm_Rec;
-                            Data : Ada.Streams.Stream_Element_Array);
+                            Data : UByte_Array);
 end Commands;

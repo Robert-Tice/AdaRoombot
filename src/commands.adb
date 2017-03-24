@@ -27,32 +27,28 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
-with Ada.Streams; use Ada.Streams;
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body Commands is
 
     Invalid_Mode_Exception : exception;
 
-    procedure Send_Command (Port : Comm_Port;
+    procedure Send_Command (Port : Serial_Port;
                             Rec  : Comm_Rec)
     is
-        Raw_TX : Ada.Streams.Stream_Element_Array (1 .. Rec'Size / 8)
+        Raw_TX : UByte_Array (1 .. Rec'Size / 8)
           with Address => Rec'Address;
     begin
-        Write (Stream => Port.all,
-               Item   => Raw_TX);
+        Port.Write (Buffer => Raw_TX);
     end Send_Command;
 
-    procedure Send_Command (Port : Comm_Port;
+    procedure Send_Command (Port : Serial_Port;
                             Rec  : Comm_Rec;
-                            Data : Stream_Element_Array)
+                            Data : UByte_Array)
     is
-        Raw_TX : Ada.Streams.Stream_Element_Array (1 .. Rec'Size / 8)
+        Raw_TX : UByte_Array (1 .. Rec'Size / 8)
           with Address => Rec'Address;
     begin
-        Write (Stream => Port.all,
-               Item   => Raw_TX & Data);
+        Port.Write (Buffer => Raw_TX & Data);
     end Send_Command;
 
     function Construct_Baud (BC : Baud_Code) return Comm_Rec

@@ -5,8 +5,7 @@ package Types is
     type UByte is new Natural range 0 .. 255
       with Size => 8;
 
-    type UByte_Array is array (Integer range <>) of UByte
-      with Scalar_Storage_Order => High_Order_First;
+    type UByte_Array is array (Positive range <>) of UByte;
 
     type Day is
       (Sunday, Monday, Tuesday, Wednesday,
@@ -283,8 +282,5 @@ package Types is
         Side_Brush_Motor_Current at 77 range 0 .. 15;
         Stasis at 79 range 0 .. 7;
     end record;
-
-
-
 
 end Types;

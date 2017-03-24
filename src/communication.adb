@@ -27,87 +27,146 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
-with Ada.Streams; use Ada.Streams;
-with Ada.Strings;
-with Ada.Text_IO; use Ada.Text_IO;
-
-with GNAT.Serial_Communications; use GNAT.Serial_Communications;
 
 package body Communication is
+    G_Port : aliased Serial_Port_Inst;
 
-    Parity   : constant Parity_Check := None;
-    Bits     : constant Data_Bits := CS8;
-    End_Bits : constant Stop_Bits_Number := One;
-    Control  : constant Flow_Control := None;
-    G_Port   : aliased Serial_Port;
-
-    function Communication_Init (BC       : Baud_Code := Default_Baud;
-                                 COM_Name : String := Default_COM_Name)
-                                 return Comm_Port
+    function Communication_Init (Data_Rate : Baud_Code;
+                                 Name : String)
+                                 return Serial_Port
     is
-        PName : constant Port_Name := Port_Name(COM_Name);
-        Rate  : Data_Rate;
+        Ret : Boolean;
     begin
-        Configd_Baud := BC;
-        Configd_COM_Name := COM_Name;
-        Open (Port => G_Port,
-              Name => PName);
-        case BC is
-            when B300 =>
-                Rate := B300;
-            when B600 =>
-                Rate := B600;
-            when B1200 =>
-                Rate := B1200;
-            when B2400 =>
-                Rate := B2400;
-            when B4800 =>
-                Rate := B4800;
-            when B9600 =>
-                Rate := B9600;
-            when B19200 =>
-                Rate := B19200;
-            when B38400 =>
-                Rate := B38400;
-            when B57600 =>
-                Rate := B57600;
-            when others =>
-                Rate := B115200;
-        end case;
+        Ret := G_Port.Open (Name => Name);
 
-        Set (Port      => G_Port,
-             Rate      => Rate,
-             Bits      => Bits,
-             Stop_Bits => End_Bits,
-             Parity    => Parity,
-             Block     => False,
-             Local     => True,
-             Flow      => Control);
-        Is_Init := True;
+        if not Ret then
+            Raise_Error("Unable open file.");
+        end if;
+
         return G_Port'Access;
     end Communication_Init;
 
-    procedure Clear_Comm_Buffer (Port : in out Comm_Port)
+    procedure Communications_Close (Port : in out Serial_Port)
     is
     begin
-        Communications_Close (Port => Port);
-        Port := Communication_Init (BC      => Configd_Baud,
-                                    COM_Name => Configd_COM_Name);
+        Port.Close;
+        Port := null;
+    end Communications_Close;
+
+    procedure Clear_Comm_Buffer (Port : Serial_Port)
+    is
+        PP : Boolean;
+        Buf : UByte_Array (1 .. 256);
+    begin
+        loop
+            PP := Port.Poll;
+            exit when PP = False;
+            Port.Read (Buffer => Buf);
+        end loop;
     end Clear_Comm_Buffer;
 
-    procedure Set_Host_Baud (Port : Comm_Port;
-                             BC   : Integer)
+    function Open (Self  : Serial_Port_Inst;
+                   Name  : constant String)
+                   return Boolean;
     is
+        CName     : constant String := Name & ASCII.NUL;
+        Name_Addr : constant Chars := CName (CName'First)'Address;
     begin
-        null;
-    end Set_Host_Baud;
+        Self.Fd := File_Descriptor (Open (Filename => Name_Addr,
+                                          Oflag    => Self.Flags));
+        if Self.Fd = Invalid_FD then
+            return False;
+        end if;
+        return True;
+    end File_Open;
 
-    procedure Communications_Close (Port : Comm_Port)
+    procedure Close (Self : Serial_Port_Inst)
     is
-        SPort : access Serial_Port := Serial_Port(Port.all)'Access;
     begin
-        GNAT.Serial_Communications.Close (Port => SPort.all);
-        Is_Init := False;
-    end Communications_Close;
+        Close (Fd => C.int (Self.Fd));
+        Self.Fd := 0;
+    end Serial_Close;
+
+    function Read (Self   : Serial_Port_Inst;
+                   Buffer : out UByte_Array)
+                   return Integer
+    is
+        Ret : Integer;
+    begin
+        Ret := GNAT.OS_Lib.Read (FD => Self.Fd,
+                                 A  => Buffer'Address,
+                                 N  => Buffer'Length);
+        if Ret = -1 then
+            Raise_Error ("Read failed.");
+        end if;
+
+        return Ret;
+    end Read;
+
+    function Write (Self : Serial_Port_Inst;
+                    Buffer : in UByte_Array)
+                    return Integer
+    is
+        Ret : Integer;
+    begin
+        Ret := GNAT.OS_Lib.Write (FD => Self.Fd,
+                                  A  => Buffer'Address,
+                                  N  => Buffer'Length);
+        if Ret = -1 then
+            Raise_Error ("Write failed.");
+        end if;
+
+        return Ret;
+    end Write;
+
+    function Poll (Self : Serial_Port_Inst;
+                   Seconds : Natural := 0)
+                   return Boolean
+    is
+        Readfds : Fd_Arr;
+        Timeout : Timeval := (others => 0);
+        Timeout_Acc : access Timeval := null;
+        Ret : C.int;
+    begin
+        if Seconds > 0 then
+            Timeout.Tv_Sec := C.Int (Seconds);
+            Timeout_Acc := Timeout'Access;
+        end if;
+
+        loop
+            FD_ZERO (Set => access Readfds);
+            FD_SET (Fd  => Self.Fd;
+                    Set => access Readfds);
+            Ret := C_Select (Nfds      => Self.Fd + 1,
+                             Readfds   => access Readfds,
+                             Writefds  => Null,
+                             Exceptfds => Null,
+                             Timeout   => Timeout_Acc);
+            exit when Ret /= -1 and then Errno /= EINTR;
+        end loop;
+
+        if Ret > 0 then
+            if FD_ISSET (Fd => Self.Fd;
+                         Set => access Readfds) > 0 then
+                return True;
+            else
+                return False;
+            end if;
+        end if;
+
+        Raise_Error ("Select failed.");
+        return False;
+
+    end Poll;
+
+    procedure Raise_Error (Message : String;
+                           Error   : Integer := Errno)
+    is
+    begin
+        raise Serial_Error with Message
+          & (if Error /= 0
+             then " (" & Errno_Message (Err => Error) & ')'
+             else "");
+    end Raise_Error;
 
 end Communication;

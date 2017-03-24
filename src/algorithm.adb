@@ -1,7 +1,26 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
 package body Algorithm is
-
+    
+    procedure Init (Self     : in out Abstract_Algorithm;
+                    TTY_Name : String)
+    is
+    begin
+        Self.Port := Communication_Init (Data_Rate => B115200,
+                                         Name      => TTY_Name);
+        Send_Command (Port => Self.Port,
+                      Rec  => Comm_Rec'(Op => Start));
+        Clear_Comm_Buffer (Port => Self.Port);
+        Send_Command (Port => Self.Port,
+                      Rec  => Comm_Rec'(Op => Mode_Safe));
+    end Init;
+    
+    procedure Kill (Self : in out Abstract_Algorithm)
+    is
+    begin
+        Communications_Close (Port => Self.Port);
+    end Kill;
+        
     procedure Process (Self : in out Pong_Algorithm)
     is
     begin 

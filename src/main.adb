@@ -28,10 +28,10 @@
 ------------------------------------------------------------------------------
 
 with Botstate; use Botstate;
-with Communication; use Communication;
 
 with Ada.Command_Line; use Ada.Command_Line;
 with Ada.Text_IO; use Ada.Text_IO;
+
 
 procedure Main is
     procedure Control_Process
@@ -42,18 +42,21 @@ procedure Main is
         null;
     end Control_Process;
 
+    procedure Usage
+    is
+    begin
+        Put_Line ("./adaroombot <name of tty>");
+    end Usage;
+
 begin
     if Argument_Count = 1 then
-        Port := Communication_Init (BC       => Default_Baud,
-                                    COM_Name => Argument (1));
+        Init_Bot (TTY_Name  => Argument(1),
+                  Algo_Type => Pong);
+        Control_Process;
+        Kill_Bot;
     else
-        Port := Communication_Init;
+        Usage;
+        return;
     end if;
-
-    Init_Bot;
-
-    Control_Process;
-
-    Communications_Close(Port);
 
 end Main;
