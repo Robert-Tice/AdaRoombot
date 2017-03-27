@@ -27,7 +27,6 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
-
 package body Communication is
     G_Port : aliased Serial_Port_Inst;
 
@@ -55,37 +54,38 @@ package body Communication is
 
     procedure Clear_Comm_Buffer (Port : Serial_Port)
     is
+        Ret : Integer;
         PP : Boolean;
         Buf : UByte_Array (1 .. 256);
     begin
         loop
             PP := Port.Poll;
             exit when PP = False;
-            Port.Read (Buffer => Buf);
+            Ret := Port.Read (Buffer => Buf);
         end loop;
     end Clear_Comm_Buffer;
 
-    function Open (Self  : Serial_Port_Inst;
-                   Name  : constant String)
-                   return Boolean;
+    function Open (Self  : in out Serial_Port_Inst;
+                   Name  : String)
+                   return Boolean
     is
         CName     : constant String := Name & ASCII.NUL;
-        Name_Addr : constant Chars := CName (CName'First)'Address;
+        Name_Addr : constant C_File_Name := CName (CName'First)'Address;
     begin
-        Self.Fd := File_Descriptor (Open (Filename => Name_Addr,
-                                          Oflag    => Self.Flags));
+        Self.Fd := File_Descriptor (C_Open (Pathname => Name_Addr,
+                                            Flags    => C.Int(Self.Flags)));
         if Self.Fd = Invalid_FD then
             return False;
         end if;
         return True;
-    end File_Open;
+    end Open;
 
-    procedure Close (Self : Serial_Port_Inst)
+    procedure Close (Self : in out Serial_Port_Inst)
     is
     begin
-        Close (Fd => C.int (Self.Fd));
+        GNAT.OS_Lib.Close (FD => Self.Fd);
         Self.Fd := 0;
-    end Serial_Close;
+    end Close;
 
     function Read (Self   : Serial_Port_Inst;
                    Buffer : out UByte_Array)
@@ -123,8 +123,8 @@ package body Communication is
                    Seconds : Natural := 0)
                    return Boolean
     is
-        Readfds : Fd_Arr;
-        Timeout : Timeval := (others => 0);
+        Readfds : aliased Fd_Set;
+        Timeout : aliased Timeval := (others => 0);
         Timeout_Acc : access Timeval := null;
         Ret : C.int;
     begin
@@ -134,30 +134,23 @@ package body Communication is
         end if;
 
         loop
-            FD_ZERO (Set => access Readfds);
-            FD_SET (Fd  => Self.Fd;
-                    Set => access Readfds);
-            Ret := C_Select (Nfds      => Self.Fd + 1,
-                             Readfds   => access Readfds,
-                             Writefds  => Null,
-                             Exceptfds => Null,
+            Readfds := 2 ** Natural (Self.Fd);
+            Ret := C_Select (Nfds      => C.Int(Self.Fd) + 1,
+                             Readfds   => Readfds'Access,
+                             Writefds  => null,
+                             Exceptfds => null,
                              Timeout   => Timeout_Acc);
-            exit when Ret /= -1 and then Errno /= EINTR;
+            exit when Ret >= 0;
         end loop;
 
-        if Ret > 0 then
-            if FD_ISSET (Fd => Self.Fd;
-                         Set => access Readfds) > 0 then
-                return True;
-            else
-                return False;
-            end if;
+        if Ret = 0 then
+            return False;
         end if;
 
-        Raise_Error ("Select failed.");
-        return False;
-
+        return True;
     end Poll;
+
+    Serial_Error : exception;
 
     procedure Raise_Error (Message : String;
                            Error   : Integer := Errno)

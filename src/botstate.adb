@@ -28,7 +28,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Real_Time; use Ada.Real_Time;
-with Ada.Unchecked_Deallocation; use Ada.Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 with Commands; use Commands;
 with System; use System;
@@ -58,6 +58,7 @@ package body Botstate is
 
     task body Feedback
     is
+        Ret : Integer;
         Raw_RX    : UByte_Array (1 .. 100);
         Next_Read : Time := Clock;
         Period    : constant Time_Span := Milliseconds (20);
@@ -67,10 +68,10 @@ package body Botstate is
             Send_Command (Port   => Algo.Port,
                           Rec    => Comm_Rec'(Op                 => Sensors_List,
                                               Num_Query_Packets  => 1),
-                          Data   => (0 => 100));
+                          Data   => (1 => 100));
 
             if Algo.Port.Poll then
-                Algo.Port.Read (Buffer => Raw_RX);
+                Ret := Algo.Port.Read (Buffer => Raw_RX);
                 Bot_Interface.Set (Raw_Array => Raw_RX);
             end if;
 
@@ -98,7 +99,7 @@ package body Botstate is
                         Algo_Type : Algorithm_Type)
     is
     begin
-        case Algo is
+        case Algo_Type is
             when Pong =>
                 Algo := new Pong_Algorithm;
                 Algo.Init (TTY_Name => TTY_Name);

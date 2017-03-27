@@ -52,22 +52,23 @@ package Communication is
        B57600,
        B115200);
 
-    type Poll_Type is record
-        Read       : Boolean := False;
-        Write      : Boolean := False;
-        Exceptions : Boolean := False;
-    end record;
+    O_RDONLY : constant Integer := 16#0000#;
+    O_WRONLY : constant Integer := 16#0001#;
+    O_RDWR : constant Integer := 16#00002#;
+    O_ACCMODE : constant Integer := 16#0003#;
+
+    O_NOCTTY : constant Integer := 16#0000#;
 
     type Serial_Port_Inst is tagged record
         Fd    : File_Descriptor := 0;
-        Flags : C.Int := O_RDWR + O_NOCTTY;
+        Flags : Integer := O_RDWR + O_NOCTTY;
     end record;
 
-    function Open (Self : Serial_Port_Inst;
+    function Open (Self : in out Serial_Port_Inst;
                    Name : String)
                    return Boolean;
 
-    procedure Close (Self : Serial_Port_Inst);
+    procedure Close (Self : in out Serial_Port_Inst);
 
     function Read (Self   : Serial_Port_Inst;
                    Buffer : out UByte_Array)
@@ -81,7 +82,7 @@ package Communication is
                    Seconds: Natural := 0)
                    return Boolean;
 
-    type Serial_Port is access Serial_Port_Inst;
+    type Serial_Port is access all Serial_Port_Inst;
 
 
     function Communication_Init (Data_Rate : Baud_Code;
@@ -99,44 +100,29 @@ package Communication is
 private
     procedure Raise_Error (Message : String;
                            Error   : Integer := Errno);
+    pragma No_Return (Raise_Error);
 
-    type Fd_Arr is mod 2 ** 32;
-    pragma Convention (C, Fd_Arr);
+    function C_Open (Pathname : C_File_Name;
+                     Flags    : C.Int)
+                     return C.Int;
+    pragma Import (C, C_Open, "open");
 
-    type Fd_Arr_Ptr is access all Fd_Arr;
-    pragma Convention (C, Fd_Arr_Ptr);
+    type Fd_Set is mod 2 ** 32;
+    pragma Convention (C, Fd_Set);
 
     type Timeval is record
-        Tv_Sec  : C.Int;
+        Tv_Sec : C.Int;
         Tv_Usec : C.Int;
     end record;
     pragma Convention (C, Timeval);
 
-    type Timeval_Ptr is access all Timeval;
-    pragma Convention (C, Timeval_Ptr);
-
-    function C_Select (Nfds      : C.Int;
-                       Readfs    : Fd_Arr_Ptr;
-                       Writefds  : Fd_Arr_Ptr;
-                       Exceptfds : Fd_Arr_Ptr;
-                       Timeout   : Timeval_Ptr)
-                       return C.Int;
+    function C_Select (Nfds : C.Int;
+                       Readfds : access Fd_Set;
+                       Writefds : access Fd_Set;
+                       Exceptfds : access Fd_Set;
+                       Timeout   : access Timeval)
+                       return C.int;
     pragma Import (C, C_Select, "select");
 
-    procedure FD_CLR (Fd  : C.Int;
-                      Set : Fd_Arr_Ptr);
-    pragma Import (C, FD_CLR, "FD_CLR");
-
-    function FD_ISSET (Fd  : C.Int;
-                       Set : Fd_Arr_Ptr)
-                       return C.Int;
-    pragma Import (C, FD_ISSET, "FD_ISSET");
-
-    procedure FD_SET (Fd  : C.Int;
-                      Set : Fd_Arr_Ptr);
-    pragma Import (C, FD_SET, "FD_SET");
-
-    procedure FD_ZERO (Set : Fd_Arr_Ptr);
-    pragma Import (C, FD_ZERO, "FD_ZERO");
 
 end Communication;

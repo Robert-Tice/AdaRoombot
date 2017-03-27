@@ -37,8 +37,9 @@ package body Commands is
     is
         Raw_TX : UByte_Array (1 .. Rec'Size / 8)
           with Address => Rec'Address;
+        Ret : Integer;
     begin
-        Port.Write (Buffer => Raw_TX);
+        Ret := Port.Write (Buffer => Raw_TX);
     end Send_Command;
 
     procedure Send_Command (Port : Serial_Port;
@@ -47,8 +48,9 @@ package body Commands is
     is
         Raw_TX : UByte_Array (1 .. Rec'Size / 8)
           with Address => Rec'Address;
+        Ret : Integer;
     begin
-        Port.Write (Buffer => Raw_TX & Data);
+        Ret := Port.Write (Buffer => Raw_TX & Data);
     end Send_Command;
 
     function Construct_Baud (BC : Baud_Code) return Comm_Rec
