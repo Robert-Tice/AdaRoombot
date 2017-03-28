@@ -1,4 +1,5 @@
-with Ada.Text_IO; use Ada.Text_IO;
+with Commands; use Commands;
+
 
 package body Algorithm is
     

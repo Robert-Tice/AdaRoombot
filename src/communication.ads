@@ -38,23 +38,39 @@ package Communication is
 
     use type C.Int;
 
-    type Baud_Code is
-      (B300,
-       B600,
-       B1200,
-       B2400,
-       B4800,
-       B9600,
-       B14400,
-       B19200,
-       B28800,
-       B38400,
-       B57600,
-       B115200);
+    type Serial_Port_Inst is private;
+    type Serial_Port is access all Serial_Port_Inst;
 
-    O_RDONLY : constant Integer := 16#0000#;
-    O_WRONLY : constant Integer := 16#0001#;
-    O_RDWR : constant Integer := 16#00002#;
+    function Communication_Init (Data_Rate : Baud_Code;
+                                 Name      : String)
+                                 return Serial_Port
+      with Post => Communication_Init'Result /= null;
+
+    procedure Clear_Comm_Buffer (Port : in Serial_Port)
+      with Pre => Port /= null;
+
+    procedure Communications_Close (Port : in out Serial_Port)
+      with Pre => Port /= null,
+      Post => Port = null;
+
+    procedure Send_Command (Port : in Serial_Port;
+                            Rec  : in Comm_Rec)
+      with Pre => Port /= null;
+
+    procedure Send_Command (Port : in Serial_Port;
+                            Rec  : in Comm_Rec;
+                            Data : in UByte_Array)
+      with Pre => Port /= null;
+
+    procedure Read_Sensors (Port   : in Serial_Port;
+                            Buffer : out UByte_Array)
+      with Pre => Port /= null;
+
+private
+
+    O_RDONLY  : constant Integer := 16#0000#;
+    O_WRONLY  : constant Integer := 16#0001#;
+    O_RDWR    : constant Integer := 16#00002#;
     O_ACCMODE : constant Integer := 16#0003#;
 
     O_NOCTTY : constant Integer := 16#0000#;
@@ -82,22 +98,6 @@ package Communication is
                    Seconds: Natural := 0)
                    return Boolean;
 
-    type Serial_Port is access all Serial_Port_Inst;
-
-
-    function Communication_Init (Data_Rate : Baud_Code;
-                                 Name      : String)
-                                 return Serial_Port
-      with Post => Communication_Init'Result /= null;
-
-    procedure Clear_Comm_Buffer (Port : Serial_Port)
-      with Pre => Port /= null;
-
-    procedure Communications_Close (Port : in out Serial_Port)
-      with Pre => Port /= null,
-      Post => Port = null;
-
-private
     procedure Raise_Error (Message : String;
                            Error   : Integer := Errno);
     pragma No_Return (Raise_Error);

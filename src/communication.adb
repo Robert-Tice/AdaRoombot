@@ -27,32 +27,38 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 package body Communication is
-    G_Port : aliased Serial_Port_Inst;
 
     function Communication_Init (Data_Rate : Baud_Code;
                                  Name : String)
                                  return Serial_Port
     is
+        Port : Serial_Port;
         Ret : Boolean;
     begin
-        Ret := G_Port.Open (Name => Name);
+        Port := new Serial_Port_Inst;
+        Ret := Port.Open (Name => Name);
 
         if not Ret then
             Raise_Error("Unable open file.");
         end if;
 
-        return G_Port'Access;
+        return Port;
     end Communication_Init;
+
+    procedure Free_Serial_Port is new Ada.Unchecked_Deallocation
+      (Object => Serial_Port_Inst, Name => Serial_Port);
 
     procedure Communications_Close (Port : in out Serial_Port)
     is
     begin
         Port.Close;
-        Port := null;
+        Free_Serial_Port (Port);
     end Communications_Close;
 
-    procedure Clear_Comm_Buffer (Port : Serial_Port)
+    procedure Clear_Comm_Buffer (Port : in Serial_Port)
     is
         Ret : Integer;
         PP : Boolean;
@@ -65,8 +71,39 @@ package body Communication is
         end loop;
     end Clear_Comm_Buffer;
 
+    procedure Send_Command (Port : in Serial_Port;
+                            Rec  : in Comm_Rec)
+    is
+        Raw_TX : UByte_Array (1 .. Rec'Size / 8)
+          with Address => Rec'Address;
+        Ret    : Integer;
+    begin
+        Ret := Port.Write (Buffer => Raw_TX);
+    end Send_Command;
+
+    procedure Send_Command (Port : in Serial_Port;
+                            Rec  : in Comm_Rec;
+                            Data : in UByte_Array)
+    is
+        Raw_TX : UByte_Array (1 .. Rec'Size / 8)
+          with Address => Rec'Address;
+        Ret    : Integer;
+    begin
+        Ret := Port.Write (Buffer => Raw_TX & Data);
+    end Send_Command;
+
+    procedure Read_Sensors (Port   : in Serial_Port;
+                            Buffer : out UByte_Array)
+    is
+        Ret_Poll : Boolean;
+        Ret_Read : Integer;
+    begin
+        Ret_Poll := Port.Poll;
+        Ret_Read := Port.Read (Buffer => Buffer);
+    end Read_Sensors;
+
     function Open (Self  : in out Serial_Port_Inst;
-                   Name  : String)
+                   Name  : in String)
                    return Boolean
     is
         CName     : constant String := Name & ASCII.NUL;
@@ -87,7 +124,7 @@ package body Communication is
         Self.Fd := 0;
     end Close;
 
-    function Read (Self   : Serial_Port_Inst;
+    function Read (Self   : in Serial_Port_Inst;
                    Buffer : out UByte_Array)
                    return Integer
     is
@@ -103,7 +140,7 @@ package body Communication is
         return Ret;
     end Read;
 
-    function Write (Self : Serial_Port_Inst;
+    function Write (Self : in Serial_Port_Inst;
                     Buffer : in UByte_Array)
                     return Integer
     is
@@ -119,7 +156,7 @@ package body Communication is
         return Ret;
     end Write;
 
-    function Poll (Self : Serial_Port_Inst;
+    function Poll (Self : in Serial_Port_Inst;
                    Seconds : Natural := 0)
                    return Boolean
     is

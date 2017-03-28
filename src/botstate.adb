@@ -30,8 +30,6 @@
 with Ada.Real_Time; use Ada.Real_Time;
 with Ada.Unchecked_Deallocation;
 
-with Commands; use Commands;
-with System; use System;
 with Communication; use Communication;
 
 package body Botstate is
@@ -58,11 +56,9 @@ package body Botstate is
 
     task body Feedback
     is
-        Ret : Integer;
         Raw_RX    : UByte_Array (1 .. 100);
         Next_Read : Time := Clock;
         Period    : constant Time_Span := Milliseconds (20);
-
     begin
         loop
             Send_Command (Port   => Algo.Port,
@@ -70,10 +66,8 @@ package body Botstate is
                                               Num_Query_Packets  => 1),
                           Data   => (1 => 100));
 
-            if Algo.Port.Poll then
-                Ret := Algo.Port.Read (Buffer => Raw_RX);
-                Bot_Interface.Set (Raw_Array => Raw_RX);
-            end if;
+            Read_Sensors (Port   => Algo.Port,
+                          Buffer => Raw_RX);
 
             Next_Read := Next_Read + Period;
             delay until Next_Read;

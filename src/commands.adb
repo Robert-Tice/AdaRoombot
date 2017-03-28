@@ -30,37 +30,6 @@
 
 package body Commands is
 
-    Invalid_Mode_Exception : exception;
-
-    procedure Send_Command (Port : Serial_Port;
-                            Rec  : Comm_Rec)
-    is
-        Raw_TX : UByte_Array (1 .. Rec'Size / 8)
-          with Address => Rec'Address;
-        Ret : Integer;
-    begin
-        Ret := Port.Write (Buffer => Raw_TX);
-    end Send_Command;
-
-    procedure Send_Command (Port : Serial_Port;
-                            Rec  : Comm_Rec;
-                            Data : UByte_Array)
-    is
-        Raw_TX : UByte_Array (1 .. Rec'Size / 8)
-          with Address => Rec'Address;
-        Ret : Integer;
-    begin
-        Ret := Port.Write (Buffer => Raw_TX & Data);
-    end Send_Command;
-
-    function Construct_Baud (BC : Baud_Code) return Comm_Rec
-    is
-        SData : Comm_Rec (Baud);
-    begin
-        SData.Baud_Rate := Baud_Code'Pos (BC);
-        return SData;
-    end Construct_Baud;
-
     function Construct_Date_Time (D : Day; H : Hour; M : Minute) return Comm_Rec
     is
         SData : Comm_Rec (Set_Day_Time);
