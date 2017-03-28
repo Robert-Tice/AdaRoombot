@@ -39,7 +39,9 @@ procedure Main is
         RX : Feedback;
         TX : Control;
     begin
-        null;
+        loop
+            null;
+        end loop;
     end Control_Process;
 
     procedure Usage
