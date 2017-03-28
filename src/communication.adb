@@ -146,15 +146,18 @@ package body Communication is
         -- Timeout in deciseconds for noncanonical read (TIME).
         Options.C_Cc (5) := Char'Val (100);
 
-        Ret_Int := C_Tcflush (Fd             => C.Int(Self.Fd),
+        Ret_Int := C_Tcflush (Fd             => C.Int (Self.Fd),
                               Queue_Selector => 0);
+        if Ret_Int < 0 then
+            Raise_Error ("Could not flush input.");
+        end if;
+
         Ret_Int := C_Tcsetattr (Fildes           => C.Int(Self.Fd),
                                 Optional_Actions => 0,
                                 Termios_P        => Options'Access);
         if Ret_Int < 0 then
             Raise_Error ("Could not write configuration to port.");
         end if;
-
     end Open;
 
     procedure Close (Self : in out Serial_Port_Inst)
