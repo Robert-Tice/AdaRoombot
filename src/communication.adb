@@ -60,7 +60,7 @@ package body Communication is
         Buf : UByte_Array (1 .. 256);
     begin
         loop
-            PP := Port.Poll;
+            PP := Port.Poll (Seconds => 1);
             exit when PP = False;
             Ret := Port.Read (Buffer => Buf);
         end loop;
