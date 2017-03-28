@@ -80,9 +80,9 @@ private
         Flags : Integer := O_RDWR + O_NOCTTY;
     end record;
 
-    function Open (Self : in out Serial_Port_Inst;
-                   Name : String)
-                   return Boolean;
+    procedure Open (Self : in out Serial_Port_Inst;
+                   Name : in String;
+                   Data_Rate : Baud_Code);
 
     procedure Close (Self : in out Serial_Port_Inst);
 
@@ -123,6 +123,58 @@ private
                        Timeout   : access Timeval)
                        return C.int;
     pragma Import (C, C_Select, "select");
+
+    type Termios is record
+        C_Iflag : C.Unsigned;
+        C_Oflag : C.Unsigned;
+        C_Cflag : C.Unsigned;
+        C_Lflag : C.Unsigned;
+        C_Line : C.Unsigned_Char;
+        C_Cc : C.Char_Array (0 .. 31);
+        C_Ispeed : C.Unsigned;
+        C_Ospeed : C.Unsigned;
+    end record;
+    pragma Convention (C, Termios);
+
+    function C_Tcgetattr (Fildes : C.Int;
+                             Termios_P : access Termios)
+                             return C.int;
+    pragma Import (C, C_Tcgetattr, "tcgetattr");
+
+    function C_Cfsetispeed (Termios_P : access Termios;
+                            Speed     : C.Unsigned)
+                            return C.Unsigned;
+    pragma Import (C, C_Cfsetispeed, "cfsetispeed");
+
+    function C_Cfsetospeed (Termios_P : access Termios;
+                            Speed     : C.Unsigned)
+                            return C.Unsigned;
+    pragma Import (C, C_Cfsetospeed, "cfsetospeed");
+
+    function C_Tcsetattr (Fildes : C.Int;
+                          Optional_Actions : C.Int;
+                          Termios_P        : access Termios)
+                          return C.Int;
+    pragma Import (C, C_Tcsetattr, "tcsetattr");
+
+    C_Data_Rate : constant array (Baud_Code) of C.Unsigned :=
+                    (B300 => 300,
+                     B600 => 600,
+                     B1200 => 1200,
+                     B2400 => 2400,
+                     B4800 => 4800,
+                     B9600 => 9600,
+                     B14400 => 14400,
+                     B19200 => 19200,
+                     B28800 => 28800,
+                     B38400 => 38400,
+                     B57600 => 57600,
+                     B115200 => 115200);
+
+    function C_Tcflush (Fd : C.Int;
+                        Queue_Selector : C.Int)
+                        return C.Int;
+    pragma Import (C, C_Tcflush, "tcflush");
 
 
 end Communication;

@@ -2,20 +2,6 @@ with System; use System;
 
 package Types is
 
-    type Baud_Code is
-      (B300,
-       B600,
-       B1200,
-       B2400,
-       B4800,
-       B9600,
-       B14400,
-       B19200,
-       B28800,
-       B38400,
-       B57600,
-       B115200);
-
     type UByte is new Natural range 0 .. 255
       with Size => 8;
 
@@ -489,6 +475,20 @@ package Types is
        Main_Brush_Motor_Current       => 56,
        Side_Brush_Motor_Current       => 57,
        Stasis                         => 58);
+
+    type Baud_Code is
+      (B300,
+       B600,
+       B1200,
+       B2400,
+       B4800,
+       B9600,
+       B14400,
+       B19200,
+       B28800,
+       B38400,
+       B57600,
+       B115200);
 
     type Comm_Rec (Op : Opcode) is record
         case Op is

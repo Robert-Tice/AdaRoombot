@@ -36,15 +36,10 @@ package body Communication is
                                  return Serial_Port
     is
         Port : Serial_Port;
-        Ret : Boolean;
     begin
         Port := new Serial_Port_Inst;
-        Ret := Port.Open (Name => Name);
-
-        if not Ret then
-            Raise_Error("Unable open file.");
-        end if;
-
+        Port.Open (Name      => Name,
+                   Data_Rate => B115200);
         return Port;
     end Communication_Init;
 
@@ -102,19 +97,64 @@ package body Communication is
         Ret_Read := Port.Read (Buffer => Buffer);
     end Read_Sensors;
 
-    function Open (Self  : in out Serial_Port_Inst;
-                   Name  : in String)
-                   return Boolean
+    procedure Open (Self  : in out Serial_Port_Inst;
+                    Name      : in String;
+                    Data_Rate : Baud_Code)
     is
-        CName     : constant String := Name & ASCII.NUL;
-        Name_Addr : constant C_File_Name := CName (CName'First)'Address;
+        CName        : constant String := Name & ASCII.NUL;
+        Name_Addr    : constant C_File_Name := CName (CName'First)'Address;
+        Ret_Int      : C.Int;
+        Ret_Unsigned : C.Unsigned;
+        Options      : aliased Termios;
     begin
         Self.Fd := File_Descriptor (C_Open (Pathname => Name_Addr,
                                             Flags    => C.Int(Self.Flags)));
         if Self.Fd = Invalid_FD then
-            return False;
+            Raise_Error ("Could not open file.");
         end if;
-        return True;
+
+        Ret_Int := C_Tcgetattr (Fildes    => C.Int(Self.Fd),
+                                Termios_P => Options'Access);
+        if Ret_Int < 0 then
+            Raise_Error ("Could not get tty attr.");
+        end if;
+
+        Ret_Unsigned := C_Cfsetispeed (Termios_P => Options'Access,
+                                       Speed     => C_Data_Rate (Data_Rate));
+        if Ret_Unsigned < 0 then
+            Raise_Error ("Could not set ispeed.");
+        end if;
+
+        Ret_Unsigned := C_Cfsetospeed (Termios_P => Options'Access,
+                                       Speed     => C_Data_Rate (Data_Rate));
+        if Ret_Unsigned < 0 then
+            Raise_Error ("Could not set ospeed");
+        end if;
+
+        -- Set CS8
+        Options.C_Cflag := Options.C_Cflag or 8#060#;
+        -- Ignore modem control lines
+        Options.C_Cflag := Options.C_Cflag or 8#04000#;
+        -- Enable Receiver
+        Options.C_Cflag := Options.C_Cflag or 8#0200#;
+
+        Options.C_Lflag := 0;
+        Options.C_Iflag := 0;
+        Options.C_Oflag := 0;
+        -- Minimum number of characters for noncanonical read (MIN).
+        Options.C_CC (6) := Char'Val (0);
+        -- Timeout in deciseconds for noncanonical read (TIME).
+        Options.C_Cc (5) := Char'Val (100);
+
+        Ret_Int := C_Tcflush (Fd             => C.Int(Self.Fd),
+                              Queue_Selector => 0);
+        Ret_Int := C_Tcsetattr (Fildes           => C.Int(Self.Fd),
+                                Optional_Actions => 0,
+                                Termios_P        => Options'Access);
+        if Ret_Int < 0 then
+            Raise_Error ("Could not write configuration to port.");
+        end if;
+
     end Open;
 
     procedure Close (Self : in out Serial_Port_Inst)
