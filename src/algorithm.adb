@@ -10,6 +10,8 @@ package body Algorithm is
         Self.Port := Communication_Init (Data_Rate => B115200,
                                          Name      => TTY_Name);
         Send_Command (Port => Self.Port,
+                      Rec  => Comm_Rec'(Op => Reset));
+        Send_Command (Port => Self.Port,
                       Rec  => Comm_Rec'(Op => Start));
         Clear_Comm_Buffer (Port => Self.Port);
         Send_Command (Port => Self.Port,

@@ -57,9 +57,7 @@ package Types is
         Wheel_Drop_Right     : Boolean;
         Wheel_Drop_Left      : Boolean;
     end record
-      with Size => 8,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 8;
 
     for Sensor_Bumps_And_Wheel_Drops use record
         Bump_Right at 0 range 0 .. 0;
@@ -74,9 +72,7 @@ package Types is
         Right_Wheel_OC       : Boolean;
         Left_Wheel_OC        : Boolean;
     end record
-      with Size => 8,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 8;
 
     for Sensor_Wheel_Overcurrents use record
         Side_Brush_OC at 0 range 0 .. 0;
@@ -95,9 +91,7 @@ package Types is
         Schedule_But         : Boolean;
         Clock_But            : Boolean;
     end record
-      with Size => 8,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 8;
 
     for Sensor_Buttons use record
         Clean_But at 0 range 0 .. 0;
@@ -123,9 +117,7 @@ package Types is
         Internal_Charger     : Boolean;
         Home_Base            : Boolean;
     end record
-      with Size => 8,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 8;
 
     for Sensor_Charging_Sources_Available use record
         Internal_Charger at 0 range 0 .. 0;
@@ -144,9 +136,7 @@ package Types is
         LT_Bump_Front_Right  : Boolean;
         LT_Bump_Right        : Boolean;
     end record
-      with Size => 8,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 8;
 
     for Sensor_Light_Bumper use record
         LT_Bump_Left at 0 range 0 .. 0;
@@ -161,9 +151,7 @@ package Types is
         Stasis_Toggling      : Boolean;
         Stasis_Disabled      : Boolean;
     end record
-      with Size => 8,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Size => 8;
 
     for Sensor_Stasis use record
         Stasis_Toggling at 0 range 0 .. 0;
@@ -223,9 +211,7 @@ package Types is
         Side_Brush_Motor_Current       : Current;
         Stasis                         : Sensor_Stasis;
     end record
-      with Alignment => 1,
-      Scalar_Storage_Order => High_Order_First,
-      Bit_Order => High_Order_First;
+      with Alignment => 1;
 
 
     for Sensor_Collection use record
