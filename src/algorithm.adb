@@ -1,5 +1,6 @@
 with Commands; use Commands;
 
+with Ada.Unchecked_Deallocation;
 
 package body Algorithm is
     
@@ -7,10 +8,13 @@ package body Algorithm is
                     TTY_Name : String)
     is
     begin
+        Self.Sensors := new Sensor_Collection;
+        
         Self.Port := Communication_Init (Data_Rate => B115200,
                                          Name      => TTY_Name);
         Send_Command (Port => Self.Port,
                       Rec  => Comm_Rec'(Op => Reset));
+        delay 5.0;
         Send_Command (Port => Self.Port,
                       Rec  => Comm_Rec'(Op => Start));
         Clear_Comm_Buffer (Port => Self.Port);
@@ -18,10 +22,14 @@ package body Algorithm is
                       Rec  => Comm_Rec'(Op => Mode_Safe));
     end Init;
     
+    procedure Free_Sensor_Collection is new Ada.Unchecked_Deallocation
+      (Object => Sensor_Collection, Name => Sensor_Access);
+    
     procedure Kill (Self : in out Abstract_Algorithm)
     is
     begin
         Communications_Close (Port => Self.Port);
+        Free_Sensor_Collection (Self.Sensors);
     end Kill;
         
     procedure Process (Self : in out Pong_Algorithm)
