@@ -7,6 +7,7 @@ project AdaRoombot is
 
    package Builder is
       for Switches ("ada") use ("-g", "-j4", "-v");
+      for Executable ("main.adb") use "adaroombot";
    end Builder;
 
    package Compiler is

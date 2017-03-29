@@ -27,7 +27,9 @@
 --  covered by the  GNU Public License.                                     --
 ------------------------------------------------------------------------------
 
+with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Real_Time; use Ada.Real_Time;
+with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
 with Communication; use Communication;
@@ -84,9 +86,10 @@ package body Botstate is
         end loop;
     exception
         when Safety_Exception =>
-            raise Safety_Exception;
-        when others =>
-            null;
+	    Put_Line ("Unhandled safety exception. Killing Control thread.");
+        when Error: others =>
+            Put ("Unexpected exception: ");
+	    Put_Line (Exception_Information(Error));
     end Control;
 
     procedure Init_Bot (TTY_Name  : String;

@@ -14,7 +14,9 @@ package body Algorithm is
                                          Name      => TTY_Name);
         Send_Command (Port => Self.Port,
                       Rec  => Comm_Rec'(Op => Reset));
+
         delay 5.0;
+
         Send_Command (Port => Self.Port,
                       Rec  => Comm_Rec'(Op => Start));
         Clear_Comm_Buffer (Port => Self.Port);
