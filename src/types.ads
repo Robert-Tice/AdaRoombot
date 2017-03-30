@@ -268,8 +268,6 @@ package Types is
         Stasis at 79 range 0 .. 7;
     end record;
 
-    type Sensor_Access is access Sensor_Collection;
-
     type Hour_Min is record
         Hr  : Hour;
         Min : Minute;

@@ -5,20 +5,25 @@ with Communication; use Communication;
 
 package Algorithm is
     
+    type Algorithm_Type is
+      (Pong);
+    
     Safety_Exception : exception;
     
     Default_Velocity : Velocity := 320;
     
     type Abstract_Algorithm is abstract tagged record
-        Sensors : Sensor_Access;
-        Port    : Serial_Port;
+        null;
     end record;
     
-    procedure Init (Self     : in out Abstract_Algorithm;
-                    TTY_Name : String);
-    procedure Kill (Self : in out Abstract_Algorithm);
-    procedure Process (Self : in out Abstract_Algorithm) is abstract;
-    procedure Safety_Check (Self : in Abstract_Algorithm) is abstract;
+    type Algorithm_Ptr is access Abstract_Algorithm'Class;
+    
+    procedure Process (Self    : in out Abstract_Algorithm;
+                       Port    : in Serial_Port;
+                       Sensors : in Sensor_Collection) is abstract;
+    
+    procedure Safety_Check (Self    : in Abstract_Algorithm;
+                            Sensors : in Sensor_Collection) is abstract;
     
     type Algorithm_State is
       (Drive,
@@ -34,11 +39,16 @@ package Algorithm is
         Last_Turn      : Boolean := False;
     end record;
     
-    procedure Process (Self : in out Pong_Algorithm);
+    procedure Process (Self    : in out Pong_Algorithm;
+                       Port    : in Serial_Port;
+                       Sensors : in Sensor_Collection);
     
-    function Detect_Collision (Self : in Pong_Algorithm) return Boolean;
+    function Detect_Collision (Self    : in Pong_Algorithm;
+                               Sensors : in Sensor_Collection) 
+                               return Boolean;
     
-    procedure Safety_Check (Self : in Pong_Algorithm);
+    procedure Safety_Check (Self    : in Pong_Algorithm;
+                            Sensors : in Sensor_Collection);
     
 
 end Algorithm;

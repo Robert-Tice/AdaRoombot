@@ -28,33 +28,20 @@
 ------------------------------------------------------------------------------
 
 with Algorithm; use Algorithm;
+with Communication; use Communication;
 with Types; use Types;
 
 package Botstate is
 
-    type Algorithm_Type is
-      (Pong);
+    type Bot is tagged record
+        Algo    : Algorithm_Ptr;
+        Port    : Serial_Port;
+    end record;
 
-    Sensors_Private : aliased Sensor_Collection;
-
-    protected Bot_Interface is
-        procedure Set (Raw_Array : in UByte_Array);
-        entry Get (Collection : out Sensor_Collection);
-    private
-        Sensors  : access Sensor_Collection := Sensors_Private'Access;
-        Sem      : Boolean := False;
-    end Bot_Interface;
-
-    task type Feedback;
-    task type Control;
-
-    procedure Init_Bot (TTY_Name  : String;
-                        Algo_Type : Algorithm_Type);
-
-    procedure Kill_Bot;
-
-private
-    type Algorithm_Ptr is access Abstract_Algorithm'Class;
-    Algo : Algorithm_Ptr;
+    procedure Init (Self      : in out Bot;
+                    TTY_Name  : in String;
+                    Algo_Type : in Algorithm_Type);
+    procedure Start (Self : in Bot);
+    procedure Kill (Self : in out Bot);
 
 end Botstate;

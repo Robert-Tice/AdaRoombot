@@ -4,63 +4,36 @@ with Ada.Unchecked_Deallocation;
 
 package body Algorithm is
     
-    procedure Init (Self     : in out Abstract_Algorithm;
-                    TTY_Name : String)
-    is
-    begin
-        Self.Sensors := new Sensor_Collection;
-        
-        Self.Port := Communication_Init (Data_Rate => B115200,
-                                         Name      => TTY_Name);
-        Send_Command (Port => Self.Port,
-                      Rec  => Comm_Rec'(Op => Reset));
-
-        delay 5.0;
-
-        Send_Command (Port => Self.Port,
-                      Rec  => Comm_Rec'(Op => Start));
-        Clear_Comm_Buffer (Port => Self.Port);
-        Send_Command (Port => Self.Port,
-                      Rec  => Comm_Rec'(Op => Mode_Safe));
-    end Init;
-    
-    procedure Free_Sensor_Collection is new Ada.Unchecked_Deallocation
-      (Object => Sensor_Collection, Name => Sensor_Access);
-    
-    procedure Kill (Self : in out Abstract_Algorithm)
-    is
-    begin
-        Communications_Close (Port => Self.Port);
-        Free_Sensor_Collection (Self.Sensors);
-    end Kill;
-        
-    procedure Process (Self : in out Pong_Algorithm)
+      
+    procedure Process (Self    : in out Pong_Algorithm;
+                       Port    : in Serial_Port;
+                       Sensors : in Sensor_Collection)
     is
     begin 
         case Self.State is
             when Drive =>
-                Send_Command (Port   => Self.Port,
-                              Rec    => Construct_Drive_Special (Special => Straight,
-                                                                 V       => Default_Velocity));
+                Send_Command (Port => Port,
+                              Rec  => Construct_Drive_Special (Special => Straight,
+                                                                 V     => Default_Velocity));
                 Self.State := Passive_Driving;
             when Passive_Driving =>
-                if Self.Detect_Collision then
+                if Self.Detect_Collision (Sensors => Sensors) then
                     Self.State := Collision;
                 end if;
             when Collision =>
-                Send_Command (Port   => Self.Port,
+                Send_Command (Port   => Port,
                               Rec    => Construct_Drive_Special (Special => Straight,
                                                                  V       => 0));
                 Self.State := Recover;
             when Recover =>
                 case Self.Last_Turn is
                     when False =>
-                        Send_Command (Port   => Self.Port,
+                        Send_Command (Port   => Port,
                                       Rec    => Construct_Drive_Special 
                                         (Special => CW,
                                          V       => 250));
                     when True =>
-                        Send_Command (Port   => Self.Port,
+                        Send_Command (Port   => Port,
                                       Rec    => Construct_Drive_Special 
                                         (Special => CCW,
                                          V       => 250));
@@ -70,51 +43,52 @@ package body Algorithm is
                 Self.State := Passive_Recover;
                 Self.Reported_Angle := 0;
             when Passive_Recover =>
-                Self.Reported_Angle := Self.Reported_Angle + 
-                  abs Self.Sensors.Ang;
+                Self.Reported_Angle := Self.Reported_Angle + abs Sensors.Ang;
                 if Self.Reported_Angle >= 180 then
                   Self.State := Drive;
                 end if;                       
         end case;
     end Process;
     
-    function Detect_Collision (Self : in Pong_Algorithm) return Boolean
+    function Detect_Collision (Self : in Pong_Algorithm;
+                               Sensors : in Sensor_Collection) 
+                               return Boolean
     is
         Ret : Boolean := False;
     begin
-        if Self.Sensors.Bumps_And_Wheel_Drops.Bump_Right or else 
-          Self.Sensors.Bumps_And_Wheel_Drops.Bump_Left or else
-          Self.Sensors.Wall or else
-          Self.Sensors.Virtual_Wall or else
-          Self.Sensors.Light_Bumper.LT_Bump_Left or else
-          Self.Sensors.Light_Bumper.LT_Bump_Front_Left or else
-          Self.Sensors.Light_Bumper.LT_Bump_Center_Left or else
-          Self.Sensors.Light_Bumper.LT_Bump_Center_Right or else
-          Self.Sensors.Light_Bumper.LT_Bump_Front_Right or else
-          Self.Sensors.Light_Bumper.LT_Bump_Right 
+        if Sensors.Bumps_And_Wheel_Drops.Bump_Right or else 
+          Sensors.Bumps_And_Wheel_Drops.Bump_Left or else
+          Sensors.Wall or else
+          Sensors.Virtual_Wall or else
+          Sensors.Light_Bumper.LT_Bump_Left or else
+          Sensors.Light_Bumper.LT_Bump_Front_Left or else
+          Sensors.Light_Bumper.LT_Bump_Center_Left or else
+          Sensors.Light_Bumper.LT_Bump_Center_Right or else
+          Sensors.Light_Bumper.LT_Bump_Front_Right or else
+          Sensors.Light_Bumper.LT_Bump_Right 
         then
             Ret := True;
           end if;
         return Ret;
     end Detect_Collision;
     
-    procedure Safety_Check (Self : in Pong_Algorithm)
+    procedure Safety_Check (Self : in Pong_Algorithm;
+                            Sensors : in Sensor_Collection)
     is
     begin
-        if Self.Sensors.Bumps_And_Wheel_Drops.Wheel_Drop_Right or else
-          Self.Sensors.Bumps_And_Wheel_Drops.Wheel_Drop_Left or else
-          Self.Sensors.Cliff_Left or else
-          Self.Sensors.Cliff_Front_Left or else
-          Self.Sensors.Cliff_Front_Right or else
-          Self.Sensors.Cliff_Right or else
-          Self.Sensors.Wheel_Overcurrents.Side_Brush_OC or else
-          Self.Sensors.Wheel_Overcurrents.Main_Brush_OC or else
-          Self.Sensors.Wheel_Overcurrents.Right_Wheel_OC or else
-          Self.Sensors.Wheel_Overcurrents.Left_Wheel_OC
+        if Sensors.Bumps_And_Wheel_Drops.Wheel_Drop_Right or else
+          Sensors.Bumps_And_Wheel_Drops.Wheel_Drop_Left or else
+          Sensors.Cliff_Left or else
+          Sensors.Cliff_Front_Left or else
+          Sensors.Cliff_Front_Right or else
+          Sensors.Cliff_Right or else
+          Sensors.Wheel_Overcurrents.Side_Brush_OC or else
+          Sensors.Wheel_Overcurrents.Main_Brush_OC or else
+          Sensors.Wheel_Overcurrents.Right_Wheel_OC or else
+          Sensors.Wheel_Overcurrents.Left_Wheel_OC
         then 
             raise Safety_Exception with "Stopping robot.";
         end if;
-    end Safety_Check;
-          
+    end Safety_Check;         
     
 end Algorithm;

@@ -36,83 +36,73 @@ with Communication; use Communication;
 
 package body Botstate is
 
-    protected body Bot_interface is
-        procedure Set (Raw_Array : in UByte_Array)
-        is
-            Elem_Array : UByte_Array (1 .. Raw_Array'Length)
-              with Address => Sensors.all'Address;
-        begin
-            Elem_Array := Raw_Array;
-            Sem := True;
-        end Set;
-
-        entry Get (Collection : out Sensor_Collection)
-          when Sem
-        is
-        begin
-            Collection := Sensors.all;
-            Sem := False;
-        end Get;
-
-    end Bot_Interface;
-
-    task body Feedback
+    procedure Start (Self : in Bot)
     is
         Raw_RX    : UByte_Array (1 .. 100);
+        Sensors   : Sensor_Collection
+          with Address => Raw_RX'Address;
         Next_Read : Time := Clock;
-        Period    : constant Time_Span := Milliseconds (20);
+        Period    : constant Time_Span := Milliseconds (15);
+
     begin
         loop
-            Send_Command (Port   => Algo.Port,
+            Send_Command (Port   => Self.Port,
                           Rec    => Comm_Rec'(Op                 => Sensors_List,
                                               Num_Query_Packets  => 1),
                           Data   => (1 => 100));
 
-            Read_Sensors (Port   => Algo.Port,
+            Read_Sensors (Port   => Self.Port,
                           Buffer => Raw_RX);
+
+            Self.Algo.Safety_Check (Sensors => Sensors);
+            Self.Algo.Process (Port    => Self.Port,
+                               Sensors => Sensors);
 
             Next_Read := Next_Read + Period;
             delay until Next_Read;
         end loop;
-    end Feedback;
-
-    task body Control
-    is
-    begin
-        loop
-            Bot_Interface.Get (Collection => Algo.Sensors.all);
-            Algo.Safety_Check;
-            Algo.Process;
-        end loop;
     exception
         when Safety_Exception =>
-	    Put_Line ("Unhandled safety exception. Killing Control thread.");
-        when Error: others =>
+            Put_Line ("Unhandled safety exception. Killing Control thread.");
+        when Error : others =>
             Put ("Unexpected exception: ");
-	    Put_Line (Exception_Information(Error));
-    end Control;
+            Put_Line (Exception_Information (Error));
 
-    procedure Init_Bot (TTY_Name  : String;
-                        Algo_Type : Algorithm_Type)
+    end Start;
+
+    procedure Init (Self      : in out Bot;
+                    TTY_Name  : in String;
+                    Algo_Type : in Algorithm_Type)
     is
     begin
         case Algo_Type is
             when Pong =>
-                Algo := new Pong_Algorithm;
-                Algo.Init (TTY_Name => TTY_Name);
-        end case;
+                Self.Algo := new Pong_Algorithm;
+                Self.Port := Communication_Init (Data_Rate => B115200,
+                                                 Name      => TTY_Name);
+                Send_Command (Port => Self.Port,
+                              Rec  => Comm_Rec'(Op => Reset));
 
-    end Init_Bot;
+                delay 5.0;
+
+                Send_Command (Port => Self.Port,
+                              Rec  => Comm_Rec'(Op => Start));
+                Clear_Comm_Buffer (Port => Self.Port);
+                Send_Command (Port => Self.Port,
+                              Rec  => Comm_Rec'(Op => Mode_Safe));
+            when others =>
+                null;
+        end case;
+    end Init;
 
     procedure Free_Algo is new Ada.Unchecked_Deallocation
       (Object => Abstract_Algorithm'Class, Name => Algorithm_Ptr);
 
-    procedure Kill_Bot
+    procedure Kill (Self : in out Bot)
     is
     begin
-        Algo.Kill;
-        Free_Algo (Algo);
-    end Kill_Bot;
-
+        Communications_Close (Port => Self.Port);
+        Free_Algo (Self.Algo);
+    end Kill;
 
 end Botstate;
