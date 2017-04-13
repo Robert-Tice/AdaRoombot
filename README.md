@@ -12,17 +12,21 @@ http://libre.adacore.com/download/configurations#
 - Export the sysroot directory as ENV_PREFIX
 
 - You can either open the project in GPS and build from there, or run
+
 	$ gprbuild -Padaroombot.gpr
 
 - Copy the built binary to your target
+
 	$ scp obj/adaroombot pi@hostname.local:/home/pi
 
 - Connect the USB serial cable to the Raspberry Pi and the Create2
 
-- Determine which tty corresponds to the USB to serial cable (probably ttyUSB0). Look for something that says FTDI or Future TEchology Devices International
+- Determine which tty corresponds to the USB to serial cable (probably ttyUSB0). Look for something that says FTDI or Future Technology Devices International
+
 	$ lsusb
 
 - Run the program
+
 	$ ./adaroombot /dev/ttyUSB0
 
 ## How to add algorithms
