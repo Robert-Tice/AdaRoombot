@@ -1,56 +1,37 @@
-# Warning!
+# AdaRoombot
 
-This repository uses git submodule, please clone with the --recursive option:
+Simple serial control of iRobot Create 2 Roomba vacuum cleaner from Raspberry Pi.
 
-```shell
-git clone --recursive https://******insert github path here**********
-```
+## Build Instructions
 
-1. Introduction
----------------
+- Get Raspberry Pi 2 (arm-linux-gnueabihf) toolchain from libre.adacore.com
+http://libre.adacore.com/download/configurations#
 
+- Follow instructions in compiler README to populate the compiler sysroot directory with the target C runtime files.
 
+- Export the sysroot directory as ENV_PREFIX
 
-2. License
-----------
+- You can either open the project in GPS and build from there, or run
+	$ gprbuild -Padaroombot.gpr
 
-All files are provided under a 3-clause Berkeley Software Distribution (BSD)
-license. As such, and within the conditions required by the license, the files
-are available both for proprietary ("commercial") and non-proprietary use.
+- Copy the built binary to your target
+	$ scp obj/adaroombot pi@hostname.local:/home/pi
 
-For details, see the "LICENSE" file in the root directory.
+- Connect the USB serial cable to the Raspberry Pi and the Create2
 
+- Determine which tty corresponds to the USB to serial cable (probably ttyUSB0). Look for something that says FTDI or Future TEchology Devices International
+	$ lsusb
 
-3. Requirements
----------------
+- Run the program
+	$ ./adaroombot /dev/ttyUSB0
 
-The software is written in Ada 2012 and uses, for example, preconditions,
-postconditions, and the high-level iterator form of for-loops.
+## How to add algorithms
 
-In addition, a GNAT implementation-defined pragma is used extensively. This
-pragma makes it possible to avoid explicit temporary copies when assigning
-components of types representing hardware registers requiring full word or full
-half-word accesses. The pragma is named Volatile_Full_Access. Those persons
-wishing to submit additions to the library should see the GNAT Reference Manual
-for details.
+The currently implemented algorithm is called Pong. It drives straight until it runs into something and then turns 180 degrees and drives straight again until it runs into something. 
 
-Therefore, building with the sources requires a compiler supporting both Ada
-2012 and the GNAT-defined pragma Volatile_Full_Access. The "GNAT GPL 2016"
-compiler for ARM ELF is one such compiler [(Download it
-here)](http://libre.adacore.com/download/configurations). A recent GNAT Pro
-compiler for that target will also suffice.
+To implement a new algorithm, copy the Pong algorithm and change the Process procedure. 
+	- Port is the serial port used to communicate with the robot
+	- Sensors is the collection of sensor data most recently retrieved from the robot
 
 
-4. Content
-----------
 
-
-5. Roadmap
-----------
-
-
-6. Project using the Ada_Drivers_Library
-----------------------------------------
-
- 
-(Add yours to the list!)
