@@ -30,8 +30,8 @@ http://libre.adacore.com/download/configurations#
 The currently implemented algorithm is called Pong. It drives straight until it runs into something and then turns 180 degrees and drives straight again until it runs into something. 
 
 To implement a new algorithm, copy the Pong algorithm and change the Process procedure. 
-	- Port is the serial port used to communicate with the robot
-	- Sensors is the collection of sensor data most recently retrieved from the robot
+- Port is the serial port used to communicate with the robot
+- Sensors is the collection of sensor data most recently retrieved from the robot
 
 
 
