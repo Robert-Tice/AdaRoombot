@@ -54,7 +54,7 @@ package body Botstate is
             Read_Sensors (Port   => Self.Port,
                           Buffer => Raw_RX);
 
-     --       Self.Algo.Safety_Check (Sensors => Sensors);
+            Self.Algo.Safety_Check (Sensors => Sensors);
             Self.Algo.Process (Port    => Self.Port,
                                Sensors => Sensors);
 

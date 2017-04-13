@@ -28,7 +28,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Text_IO; use Ada.Text_IO;
 
 
 package body Communication is
@@ -100,7 +99,6 @@ package body Communication is
   --          Ret_Poll := Port.Poll;
             Ret_Read := Port.Read (Buffer => Buffer (Buffer'First + Bytes_Read .. Buffer'Last));
             Bytes_Read := Bytes_Read + Ret_Read;
-            Put_Line ("Read " & Ret_Read'Image & " bytes.");
             exit when Bytes_Read >= Buffer'Length;
         end loop;
 
@@ -190,15 +188,9 @@ package body Communication is
     is
         Ret : Integer;
     begin
-        Put_Line ("Writing bytes: ");
-        for I in Buffer'Range loop
-            Put_Line (Buffer (I)'Image);
-        end loop;
-
         Ret := GNAT.OS_Lib.Write (FD => Self.Fd,
                                   A  => Buffer'Address,
                                   N  => Buffer'Length);
-        Put_Line ("Wrote " & Ret'Image & " bytes.");
         if Ret = -1 then
             Raise_Error ("Write failed.");
         end if;
