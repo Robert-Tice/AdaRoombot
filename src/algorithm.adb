@@ -43,7 +43,7 @@ package body Algorithm is
                 Self.State := Passive_Recover;
                 Self.Reported_Angle := 0;
             when Passive_Recover =>
-                Self.Reported_Angle := Self.Reported_Angle + abs Sensors.Ang;
+                Self.Reported_Angle := Self.Reported_Angle + abs Sensors.Ang.Value;
                 if Self.Reported_Angle >= 180 then
                   Self.State := Drive;
                 end if;                       

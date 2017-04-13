@@ -31,6 +31,8 @@ with Types; use Types;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Interfaces.C; use Interfaces.C;
+with System;
+with System.OS_Constants;
 
 package Communication is
 
@@ -137,39 +139,37 @@ private
     pragma Convention (C, Termios);
 
     function C_Tcgetattr (Fildes : C.Int;
-                             Termios_P : access Termios)
+                             Termios_P : System.Address)
                              return C.int;
     pragma Import (C, C_Tcgetattr, "tcgetattr");
 
-    function C_Cfsetispeed (Termios_P : access Termios;
+    function C_Cfsetispeed (Termios_P : System.Address;
                             Speed     : C.Unsigned)
                             return C.Unsigned;
     pragma Import (C, C_Cfsetispeed, "cfsetispeed");
 
-    function C_Cfsetospeed (Termios_P : access Termios;
+    function C_Cfsetospeed (Termios_P : System.Address;
                             Speed     : C.Unsigned)
                             return C.Unsigned;
     pragma Import (C, C_Cfsetospeed, "cfsetospeed");
 
     function C_Tcsetattr (Fildes : C.Int;
                           Optional_Actions : C.Int;
-                          Termios_P        : access Termios)
+                          Termios_P        : SYSTEM.aDDRESS)
                           return C.Int;
     pragma Import (C, C_Tcsetattr, "tcsetattr");
 
     C_Data_Rate : constant array (Baud_Code) of C.Unsigned :=
-                    (B300 => 300,
-                     B600 => 600,
-                     B1200 => 1200,
-                     B2400 => 2400,
-                     B4800 => 4800,
-                     B9600 => 9600,
-                     B14400 => 14400,
-                     B19200 => 19200,
-                     B28800 => 28800,
-                     B38400 => 38400,
-                     B57600 => 57600,
-                     B115200 => 115200);
+                    (B300 => System.OS_Constants.B300,
+                     B600 => System.OS_Constants.B600,
+                     B1200 => System.OS_Constants.B1200,
+                     B2400 => System.OS_Constants.B2400,
+                     B4800 => System.OS_Constants.B4800,
+                     B9600 => System.OS_Constants.B9600,
+                     B19200 => System.OS_Constants.B19200,
+                     B38400 => System.OS_Constants.B38400,
+                     B57600 => System.OS_Constants.B57600,
+                     B115200 => System.OS_Constants.B115200);
 
     function C_Tcflush (Fd : C.Int;
                         Queue_Selector : C.Int)

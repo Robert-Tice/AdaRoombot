@@ -48,13 +48,13 @@ package body Commands is
     begin
         case Special is
         when Straight =>
-            SData.Rad := 32767;
+            SData.Rad.Value := 32767;
         when CW =>
-            SData.Rad := -1;
+            SData.Rad.Value := -1;
         when CCW =>
-            SData.Rad := 1;
+            SData.Rad.Value := 1;
         end case;
-        SData.Vel := V;
+        SData.Vel.Value := V;
         return SData;
     end Construct_Drive_Special;
 

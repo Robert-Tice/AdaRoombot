@@ -17,18 +17,48 @@ package Types is
     type Velocity is new Integer range -500 .. 500
       with Size => 16;
 
+    type Velocity_Container is record
+        Value : Velocity;
+    end record
+      with Scalar_Storage_Order => High_Order_First,
+      Bit_Order => High_Order_First;
+
     type Radius is new Integer range -32768 .. 32767
       with Static_Predicate => Radius in -2000 .. 2000 | -32768 | 32767,
       Size => 16;
 
+    type Radius_Container is record
+        Value : Radius;
+    end record
+      with Scalar_Storage_Order => High_Order_First,
+      Bit_Order => High_Order_First;
+
     type Distance is new Integer range -32768 .. 32767
       with Size => 16;
+
+    type Distance_Container is record
+        Value : Distance;
+    end record
+      with Scalar_Storage_Order => High_Order_First,
+      Bit_Order => High_Order_First;
 
     type Voltage is new Natural range 0 .. 65535
       with Size => 16;
 
+    type Voltage_Container is record
+        Value : Voltage;
+    end record
+      with Scalar_Storage_Order => High_Order_First,
+      Bit_Order => High_Order_First;
+
     type Current is new Integer range -32768 .. 32767
       with Size => 16;
+
+    type Current_Container is record
+        Value : Current;
+    end record
+      with Scalar_Storage_Order => High_Order_First,
+      Bit_Order => High_Order_First;
 
     type Temperature is new Integer range -128 .. 127
       with Size => 8;
@@ -36,11 +66,29 @@ package Types is
     type Charge is new Natural range 0 .. 65535
       with Size => 16;
 
+    type Charge_Container is record
+        Value : Charge;
+    end record
+      with Scalar_Storage_Order => High_Order_First,
+      Bit_Order => High_Order_First;
+
     type Sensor_Wall_Signal is new Natural range 0 .. 1023
       with Size => 16;
 
+    type Sensor_Wall_Signal_Container is record
+        Value : Sensor_Wall_Signal;
+    end record
+      with Scalar_Storage_Order => High_Order_First,
+      Bit_Order => High_Order_First;
+
     type Sensor_Cliff_Signal is new Natural range 0 .. 4095
       with Size => 16;
+
+    type Sensor_Cliff_Signal_Container is record
+        Value : Sensor_Cliff_Signal;
+    end record
+      with Scalar_Storage_Order => High_Order_First,
+      Bit_Order => High_Order_First;
 
     type Sensor_Song_Number is new Natural range 0 .. 15
       with Size => 8;
@@ -48,8 +96,20 @@ package Types is
     type Encoder_Counts is new Integer range -32768 .. 32767
       with Size => 16;
 
+    type Encoder_Counts_Container is record
+        Value : Encoder_Counts;
+    end record
+      with Scalar_Storage_Order => High_Order_First,
+      Bit_Order => High_Order_First;
+
     type Light_Bump_Signal is new Natural range 0 .. 4095
       with Size => 16;
+
+    type Light_Bump_Signal_Container is record
+        Value : Light_Bump_Signal;
+    end record
+      with Scalar_Storage_Order => High_Order_First,
+      Bit_Order => High_Order_First;
 
     type Sensor_Bumps_And_Wheel_Drops is record
         Bump_Right           : Boolean;
@@ -171,44 +231,44 @@ package Types is
         Unused1                        : UByte;
         IR_Char_Omni                   : Character;
         Buttons                        : Sensor_Buttons;
-        Dis                            : Distance;
-        Ang                            : Radius;
+        Dis                            : Distance_Container;
+        Ang                            : Radius_Container;
         Charging_State                 : Sensors_Charging_State;
-        Volt                           : Voltage;
-        Cur                            : Current;
+        Volt                           : Voltage_Container;
+        Cur                            : Current_Container;
         Temp                           : Temperature;
-        Batt_Charge                    : Charge;
-        Batt_Cap                       : Charge;
-        Wall_Sig                       : Sensor_Wall_Signal;
-        Cliff_Left_Sig                 : Sensor_Cliff_Signal;
-        Cliff_Front_Left_Sig           : Sensor_Cliff_Signal;
-        Cliff_Front_Right_Sig          : Sensor_Cliff_Signal;
-        Cliff_Right_Sig                : Sensor_Cliff_Signal;
+        Batt_Charge                    : Charge_Container;
+        Batt_Cap                       : Charge_Container;
+        Wall_Sig                       : Sensor_Wall_Signal_Container;
+        Cliff_Left_Sig                 : Sensor_Cliff_Signal_Container;
+        Cliff_Front_Left_Sig           : Sensor_Cliff_Signal_Container;
+        Cliff_Front_Right_Sig          : Sensor_Cliff_Signal_Container;
+        Cliff_Right_Sig                : Sensor_Cliff_Signal_Container;
         Unused2                        : UByte_Array (1 .. 3);
         Charging_Sources_Available     : Sensor_Charging_Sources_Available;
         OI_Mode                        : Sensor_OI_Mode;
         Song_Number                    : Sensor_Song_Number;
         Song_Playing                   : Boolean;
         Number_Of_Stream_Packets       : UByte;
-        Requested_Velocity             : Velocity;
-        Requested_Radius               : Radius;
-        Requested_Right_Velocity       : Velocity;
-        Requested_Left_Velocity        : Velocity;
-        Left_Encoder_Counts            : Encoder_Counts;
-        Right_Encoder_Counts           : Encoder_Counts;
+        Requested_Velocity             : Velocity_Container;
+        Requested_Radius               : Radius_Container;
+        Requested_Right_Velocity       : Velocity_Container;
+        Requested_Left_Velocity        : Velocity_Container;
+        Left_Encoder_Counts            : Encoder_Counts_Container;
+        Right_Encoder_Counts           : Encoder_Counts_Container;
         Light_Bumper                   : Sensor_Light_Bumper;
-        Light_Bump_Left_Signal         : Light_Bump_Signal;
-        Light_Bump_Front_Left_Signal   : Light_Bump_Signal;
-        Light_Bump_Center_Left_Signal  : Light_Bump_Signal;
-        Light_Bump_Center_Right_Signal : Light_Bump_Signal;
-        Light_Bump_Front_Right_Signal  : Light_Bump_Signal;
-        Light_Bump_Right_Signal        : Light_Bump_Signal;
+        Light_Bump_Left_Signal         : Light_Bump_Signal_Container;
+        Light_Bump_Front_Left_Signal   : Light_Bump_Signal_Container;
+        Light_Bump_Center_Left_Signal  : Light_Bump_Signal_Container;
+        Light_Bump_Center_Right_Signal : Light_Bump_Signal_Container;
+        Light_Bump_Front_Right_Signal  : Light_Bump_Signal_Container;
+        Light_Bump_Right_Signal        : Light_Bump_Signal_Container;
         IR_Character_Left              : Character;
         IR_Character_Right             : Character;
-        Left_Motor_Current             : Current;
-        Right_Motor_Current            : Current;
-        Main_Motor_Current             : Current;
-        Side_Brush_Motor_Current       : Current;
+        Left_Motor_Current             : Current_Container;
+        Right_Motor_Current            : Current_Container;
+        Main_Motor_Current             : Current_Container;
+        Side_Brush_Motor_Current       : Current_Container;
         Stasis                         : Sensor_Stasis;
     end record
       with Alignment => 1;
@@ -469,9 +529,7 @@ package Types is
        B2400,
        B4800,
        B9600,
-       B14400,
        B19200,
-       B28800,
        B38400,
        B57600,
        B115200);
@@ -481,8 +539,8 @@ package Types is
         when Baud =>
             Baud_Rate          : Integer range 0 .. 11;
         when Drive =>
-            Vel                : Velocity;
-            Rad                : Radius;
+            Vel                : Velocity_Container;
+            Rad                : Radius_Container;
         when Motors =>
             Side_Brush         : Boolean;
             Vacuum             : Boolean;
@@ -508,8 +566,8 @@ package Types is
             Side_Brush_PWM     : Integer range -127 .. 127;
             Vacuum_PWM         : Integer range 0 .. 127;
         when Drive_Direct =>
-            Right_Velocity     : Velocity;
-            Left_Velocity      : Velocity;
+            Right_Velocity     : Velocity_Container;
+            Left_Velocity      : Velocity_Container;
         when Drive_PWM =>
             Right_PWM          : Integer range -255 .. 255;
             Left_PWM           : Integer range -255 .. 255;

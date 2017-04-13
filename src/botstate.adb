@@ -38,7 +38,7 @@ package body Botstate is
 
     procedure Start (Self : in Bot)
     is
-        Raw_RX    : UByte_Array (1 .. 100);
+        Raw_RX    : UByte_Array (1 .. Sensor_Collection'Size / 8);
         Sensors   : Sensor_Collection
           with Address => Raw_RX'Address;
         Next_Read : Time := Clock;
@@ -54,7 +54,7 @@ package body Botstate is
             Read_Sensors (Port   => Self.Port,
                           Buffer => Raw_RX);
 
-            Self.Algo.Safety_Check (Sensors => Sensors);
+     --       Self.Algo.Safety_Check (Sensors => Sensors);
             Self.Algo.Process (Port    => Self.Port,
                                Sensors => Sensors);
 

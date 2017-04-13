@@ -28,6 +28,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Text_IO; use Ada.Text_IO;
+
 
 package body Communication is
 
@@ -92,9 +94,16 @@ package body Communication is
     is
         Ret_Poll : Boolean;
         Ret_Read : Integer;
+        Bytes_Read : Natural := 0;
     begin
-        Ret_Poll := Port.Poll;
-        Ret_Read := Port.Read (Buffer => Buffer);
+        loop
+  --          Ret_Poll := Port.Poll;
+            Ret_Read := Port.Read (Buffer => Buffer (Buffer'First + Bytes_Read .. Buffer'Last));
+            Bytes_Read := Bytes_Read + Ret_Read;
+            Put_Line ("Read " & Ret_Read'Image & " bytes.");
+            exit when Bytes_Read >= Buffer'Length;
+        end loop;
+
     end Read_Sensors;
 
     procedure Open (Self  : in out Serial_Port_Inst;
@@ -114,47 +123,39 @@ package body Communication is
         end if;
 
         Ret_Int := C_Tcgetattr (Fildes    => C.Int(Self.Fd),
-                                Termios_P => Options'Access);
+                                Termios_P => Options'Address);
         if Ret_Int < 0 then
             Raise_Error ("Could not get tty attr.");
         end if;
 
-        Ret_Unsigned := C_Cfsetispeed (Termios_P => Options'Access,
-                                       Speed     => C_Data_Rate (Data_Rate));
-        if Ret_Unsigned < 0 then
-            Raise_Error ("Could not set ispeed.");
-        end if;
-
-        Ret_Unsigned := C_Cfsetospeed (Termios_P => Options'Access,
-                                       Speed     => C_Data_Rate (Data_Rate));
-        if Ret_Unsigned < 0 then
-            Raise_Error ("Could not set ospeed");
-        end if;
-
-        -- Set CS8
-        Options.C_Cflag := Options.C_Cflag or 8#060#;
-        -- Ignore modem control lines
-        Options.C_Cflag := Options.C_Cflag or 8#04000#;
-        -- Enable Receiver
-        Options.C_Cflag := Options.C_Cflag or 8#0200#;
+        Options.C_Cflag := C_Data_Rate (Data_Rate) or
+          System.OS_Constants.CS8 or
+   --       System.OS_Constants.CSTOPB or
+   --       System.OS_Constants.PARENB or
+          System.OS_Constants.CLOCAL or
+          System.OS_Constants.CREAD;
 
         Options.C_Lflag := 0;
         Options.C_Iflag := 0;
         Options.C_Oflag := 0;
+
+        Options.C_Ispeed := C_Data_Rate (Data_Rate);
+        Options.C_Ospeed := C_Data_Rate (Data_Rate);
+
         -- Minimum number of characters for noncanonical read (MIN).
-        Options.C_CC (6) := Char'Val (0);
+        Options.C_CC (System.OS_Constants.VMIN) := Char'Val (0);
         -- Timeout in deciseconds for noncanonical read (TIME).
-        Options.C_Cc (5) := Char'Val (100);
+        Options.C_Cc (System.OS_Constants.VTIME) := Char'Val (100);
 
         Ret_Int := C_Tcflush (Fd             => C.Int (Self.Fd),
-                              Queue_Selector => 0);
+                              Queue_Selector => System.OS_Constants.TCIFLUSH);
         if Ret_Int < 0 then
             Raise_Error ("Could not flush input.");
         end if;
 
         Ret_Int := C_Tcsetattr (Fildes           => C.Int(Self.Fd),
-                                Optional_Actions => 0,
-                                Termios_P        => Options'Access);
+                                Optional_Actions => System.OS_Constants.TCSANOW,
+                                Termios_P        => Options'Address);
         if Ret_Int < 0 then
             Raise_Error ("Could not write configuration to port.");
         end if;
@@ -189,9 +190,15 @@ package body Communication is
     is
         Ret : Integer;
     begin
+        Put_Line ("Writing bytes: ");
+        for I in Buffer'Range loop
+            Put_Line (Buffer (I)'Image);
+        end loop;
+
         Ret := GNAT.OS_Lib.Write (FD => Self.Fd,
                                   A  => Buffer'Address,
                                   N  => Buffer'Length);
+        Put_Line ("Wrote " & Ret'Image & " bytes.");
         if Ret = -1 then
             Raise_Error ("Write failed.");
         end if;
